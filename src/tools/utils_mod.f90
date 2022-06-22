@@ -10,16 +10,18 @@ module utils_mod
 
 contains
 
-    subroutine get_fn(fn)
+    subroutine get_fn(fn_grid, fn_topo)
         implicit none
-        character(len=*), intent(out) :: fn
+        character(len=*), intent(out) :: fn_grid
+        character(len=*), intent(out) :: fn_topo
 
-        if (command_argument_count() /= 1) then
-            write(unit=error_unit, fmt='(A)') "Argument error: Expected 1 input."
+        if (command_argument_count() /= 2) then
+            write(unit=error_unit, fmt='(A)') "Argument error: Expected 2 input arguments."
             stop COMMAND_LINE_ERR
         end if
 
-        call get_command_argument(1, fn)
+        call get_command_argument(1, fn_grid)
+        call get_command_argument(2, fn_topo)
 
     end subroutine get_fn
 
