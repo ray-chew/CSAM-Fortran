@@ -15,7 +15,8 @@ program main
     type(topo_t) :: topo_obj
 
     ! hard-coded index for test.
-    integer, parameter :: ref_idx = 441 !13680
+    integer, parameter :: ref_idx = 441 !13680 
+    ! 441 corresponds to the topography around the Elbrus mountain
 
     print *, "Reading grid data..."
 
@@ -43,10 +44,6 @@ program main
     call get_data(fn_topo, "lat", topo_lat)
     call get_data(fn_topo, "lon", topo_lon)
     call get_data(fn_topo, "topo", topo_dat)
-
-    ! topo_lat = transpose(topo_lat)
-    ! topo_lon = transpose(topo_lon)
-    ! topo_dat = transpose(topo_dat)
 
     print *, "Read topo_lat with shape: ", shape(topo_lat)
     print *, "Read topo_lon with shape: ", shape(topo_lon)
