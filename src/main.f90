@@ -15,7 +15,7 @@ program main
     type(topo_t) :: topo_obj
 
     ! hard-coded index for test.
-    integer, parameter :: ref_idx = 13680
+    integer, parameter :: ref_idx = 441 !13680
 
     print *, "Reading grid data..."
 
