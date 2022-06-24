@@ -5,18 +5,16 @@ module topo_mod
 
     private
 
-    public :: topo_t, set_attrs, dealloc_obj
+    public :: topo_t, get_topo, dealloc_obj
 
     type :: topo_t
-        private
         real, dimension(:), allocatable :: lat, lon
         real, dimension(:,:), allocatable :: topo
-
     end type topo_t
 
 contains
 
-    subroutine set_attrs(lat, lon, clat, clon, width, topo, obj)
+    subroutine get_topo(lat, lon, clat, clon, width, topo, obj)
         implicit none
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon      
@@ -52,7 +50,8 @@ contains
             stop ALLOCATION_ERR
         end if
 
-        do i=1,nrecs
+        ! do i=1,nrecs
+        do i=26,27
             print *, "nrec = ", i
             lat_grid = spread(lat(:,i), 1, nlon)
             lon_grid = spread(lon(:,i), 2, nlat)
@@ -92,7 +91,7 @@ contains
         if ((size(obj%lat) * size(obj%lon)) /= size(obj%topo)) then
             write(unit=error_unit, fmt='(A)') "Error: Gathered subpoints shapes do not match."
         end if
-    end subroutine set_attrs
+    end subroutine get_topo
 
     subroutine dealloc_obj(obj)
         implicit none

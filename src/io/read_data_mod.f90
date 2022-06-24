@@ -1,4 +1,4 @@
-module read_grid_mod
+module read_data_mod
     use :: netcdf
     use :: netcdf_check, only : nc_check
     use, intrinsic :: iso_fortran_env, only : error_unit
@@ -6,13 +6,13 @@ module read_grid_mod
     implicit none
 
     private
-    public :: get_data
+    public :: read_data
 
-    interface get_data
+    interface read_data
         module procedure load_1D
         module procedure load_2D
         module procedure load_3D
-    end interface get_data
+    end interface read_data
 
 contains
 
@@ -66,8 +66,6 @@ contains
             call nc_check(nf90_inquire_dimension(ncid, dimid, len=dimlens(i)))
         end do
 
-        ! print *, dimlens
-
         allocate (array(dimlens(1),dimlens(2)), stat=stat)
 
         if (stat /= 0) then
@@ -102,8 +100,6 @@ contains
             call nc_check(nf90_inquire_dimension(ncid, dimid, len=dimlens(i)))
         end do
 
-        ! print *, dimlens
-
         allocate (array(dimlens(1),dimlens(2),dimlens(3)), stat=stat)
 
         if (stat /= 0) then
@@ -117,4 +113,4 @@ contains
     end subroutine load_3D
 
 
-end module read_grid_mod
+end module read_data_mod
