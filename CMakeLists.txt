@@ -14,7 +14,8 @@ add_compile_options(-g -Wall -Wextra)
 
 add_executable(${PROJECT_NAME} 
                 src/main.f90 
-                src/io/read_grid_mod.f90
+                src/io/read_data_mod.f90
+                src/io/write_data_mod.f90
                 src/io/netcdf_check_mod.f90
                 src/tools/error_status_mod.f90
                 src/tools/utils_mod.f90
