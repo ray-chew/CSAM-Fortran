@@ -31,9 +31,17 @@
 *.out
 *.app
 
-# Data and build directories
+# Data, test, and build directories
 data/*
 build/*
+test/*
 
-# Mess
+# Test files, scripts, and notebooks
 test.*
+*.py
+*.pyc
+*.ipynb
+*.json
+
+# Output files
+*.nc
