@@ -66,7 +66,6 @@ program main
     call close_dataset(ncid)
 
     call dealloc_all()
-    call dealloc_obj(topo_obj)
 
 contains
 
@@ -80,6 +79,8 @@ contains
         deallocate(topo_lat)
         deallocate(topo_lon)
         deallocate(topo_dat)
+
+        call dealloc_obj(topo_obj)
     end subroutine dealloc_all
 
 end program main
