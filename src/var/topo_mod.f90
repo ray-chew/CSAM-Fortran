@@ -5,7 +5,7 @@ module topo_mod
 
     private
 
-    public :: topo_t, get_topo, dealloc_obj
+    public :: topo_t, get_topo, dealloc_topo_obj
 
     type :: topo_t
         real, dimension(:), allocatable :: lat, lon
@@ -96,7 +96,7 @@ contains
         obj%lon_grid = spread(obj%lon, 2, size(obj%lat))
     end subroutine get_topo
 
-    subroutine dealloc_obj(obj)
+    subroutine dealloc_topo_obj(obj)
         implicit none
         type(topo_t), intent(inout) :: obj
 
@@ -104,6 +104,6 @@ contains
         deallocate(obj%lon)
         deallocate(obj%topo)
 
-    end subroutine dealloc_obj
+    end subroutine dealloc_topo_obj
 
 end module topo_mod
