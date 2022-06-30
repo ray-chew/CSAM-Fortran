@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 
 project(four_topo LANGUAGES Fortran)
 
-# find_package(netcdf REQUIRED)
 find_package(fortran_stdlib REQUIRED)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY
@@ -20,13 +19,15 @@ add_executable(${PROJECT_NAME}
                 src/tools/error_status_mod.f90
                 src/tools/utils_mod.f90
 	            src/var/topo_mod.f90
-                src/math/fourier_trans_mod.f90
+                src/math/fourier_mod.f90
                 )
+
 target_include_directories(${PROJECT_NAME}
                             PUBLIC
-                            "/usr/include/" 
+                            "/usr/include/"
                             )
 target_link_libraries(  ${PROJECT_NAME} 
                         PRIVATE
                         "netcdff"
-                        fortran_stdlib::fortran_stdlib)
+                        fortran_stdlib::fortran_stdlib
+                        )

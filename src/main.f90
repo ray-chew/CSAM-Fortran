@@ -2,13 +2,13 @@ program main
     use read_data_mod
     use write_data_mod
     use utils_mod
-    use topo_mod, only : topo_t, get_topo, dealloc_obj
-    use fourier_trans_mod, only : llgrid_t, set_triangle_verts
+    use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
+    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, dealloc_llgrid_obj
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
     real, dimension(:), allocatable :: lat_center, lon_center
-    real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon
+    real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real, dimension(:,:,:), allocatable :: topo_dat
     real :: lat_ref, lon_ref
     real :: start, finish
@@ -72,13 +72,12 @@ program main
 
     print *, "Gathering points in the triangle..."
     call set_triangle_verts(llgrid_obj, lat_vert(:,ref_idx), lon_vert(:,ref_idx))
-
-    allocate (mask(size(topo_obj%lat), size(topo_obj%lon)))
-    print *, shape(mask)
+    ! allocate (mask(size(topo_obj%lat), size(topo_obj%lon)))
     mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
 
-    print *, shape(mask)
-    print *, count(mask)
+    print *, "Computing Fourier coefficients..."
+    call get_coeffs(topo_obj, mask, coeffs)
+
     call dealloc_all()
 
 contains
@@ -96,7 +95,7 @@ contains
 
         deallocate(mask)
 
-        call dealloc_obj(topo_obj)
+        call dealloc_topo_obj(topo_obj)
     end subroutine dealloc_all
 
 end program main
