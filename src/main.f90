@@ -25,7 +25,6 @@ program main
 
     print *, "Reading grid data..."
 
-    call cpu_time(start)
     call get_fn(fn_grid, fn_topo)
     fn_grid = trim(fn_grid)
     fn_topo = trim(fn_topo)
@@ -54,10 +53,9 @@ program main
     print *, "Read topo_lon with shape: ", shape(topo_lon)
     print *, "Read topo_dat with shape: ", shape(topo_dat)
 
+    call cpu_time(start)
     print *, "Gathering subpoints..."
     call get_topo(topo_lat, topo_lon, lat_ref, lon_ref, 2.0, topo_dat, topo_obj)
-    call cpu_time(finish)
-    print '("Time = ",f6.3," seconds.")',finish-start
 
     print *, "Gathering points in the triangle..."
     call set_triangle_verts(llgrid_obj, lat_vert(:,ref_idx), lon_vert(:,ref_idx))
@@ -83,6 +81,9 @@ program main
     topo_recon_id = write_data(ncid, 'topo_recon', topo_obj%topo_recon_2D, (/lon_dim_id,lat_dim_id/))
     call write_attrs(ncid, topo_recon_id, 'units', 'degrees')
     call close_dataset(ncid)
+
+    call cpu_time(finish)
+    print '("Time = ",f6.3," seconds.")',finish-start
 
     call dealloc_all()
 
