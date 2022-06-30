@@ -115,24 +115,24 @@ contains
                     l = l + 1
                 end do
             end do
-            coeffs(1:N_cos,k) = cos_all(tmp)
-            coeffs(N_cos+1:N_cos+N_sin,k) = sin_all(tmp(1:size(tmp)))
+            coeffs(1:N_cos,k) = cos(tmp)
+            coeffs(N_cos+1:N_cos+N_sin,k) = sin(tmp(1:size(tmp)))
         end do
 
     end subroutine get_coeffs
 
-    elemental function cos_all(x) result(y)
-        implicit none
-        real, intent(in) :: x
-        real :: y
-        y = cos(x)
-    end function cos_all
+    ! elemental function cos_all(x) result(y)
+    !     implicit none
+    !     real, intent(in) :: x
+    !     real :: y
+    !     y = cos(x)
+    ! end function cos_all
 
-    elemental function sin_all(x) result (y)
-        implicit none
-        real, intent(in) :: x
-        real :: y
-        y = sin(x)
-    end function sin_all
+    ! elemental function sin_all(x) result (y)
+    !     implicit none
+    !     real, intent(in) :: x
+    !     real :: y
+    !     y = sin(x)
+    ! end function sin_all
 
 end module fourier_mod
