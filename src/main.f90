@@ -4,6 +4,7 @@ program main
     use utils_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
     use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
+    use lin_reg_mod, only : do_lin_reg
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
@@ -12,7 +13,7 @@ program main
     real, dimension(:,:,:), allocatable :: topo_dat
     real :: lat_ref, lon_ref
     real :: start, finish
-    integer :: ncid, lat_dim_id, lon_dim_id, lat_var_id, lon_var_id, topo_var_id
+    integer :: ncid, lat_dim_id, lon_dim_id, lat_var_id, lon_var_id, topo_var_id, topo_recon_id
 
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
@@ -58,18 +59,6 @@ program main
     call cpu_time(finish)
     print '("Time = ",f6.3," seconds.")',finish-start
 
-    ! print *, "Writing data output..."
-    ! ncid = create_dataset('output.nc')
-    ! lat_dim_id = create_dim(ncid, 'nlat', size(topo_obj%lat))
-    ! lon_dim_id = create_dim(ncid, 'nlon', size(topo_obj%lon))
-    ! lat_var_id = write_data(ncid, 'lat', topo_obj%lat, (/lat_dim_id/))
-    ! call write_attrs(ncid, lat_var_id, 'units', 'degrees')
-    ! lon_var_id = write_data(ncid, 'lon', topo_obj%lon, (/lon_dim_id/))
-    ! call write_attrs(ncid, lon_var_id, 'units', 'degrees')
-    ! topo_var_id = write_data(ncid, 'topo', topo_obj%topo, (/lon_dim_id,lat_dim_id/))
-    ! call write_attrs(ncid, topo_var_id, 'units', 'degrees')
-    ! call close_dataset(ncid)
-
     print *, "Gathering points in the triangle..."
     call set_triangle_verts(llgrid_obj, lat_vert(:,ref_idx), lon_vert(:,ref_idx))
     ! allocate (mask(size(topo_obj%lat), size(topo_obj%lon)))
@@ -77,6 +66,23 @@ program main
 
     print *, "Computing Fourier coefficients..."
     call get_coeffs(topo_obj, mask, coeffs)
+
+    print *, "Doing linear regression..."
+    call do_lin_reg(coeffs, topo_obj, mask)
+
+    print *, "Writing data output..."
+    ncid = create_dataset('output.nc')
+    lat_dim_id = create_dim(ncid, 'nlat', size(topo_obj%lat))
+    lon_dim_id = create_dim(ncid, 'nlon', size(topo_obj%lon))
+    lat_var_id = write_data(ncid, 'lat', topo_obj%lat, (/lat_dim_id/))
+    call write_attrs(ncid, lat_var_id, 'units', 'degrees')
+    lon_var_id = write_data(ncid, 'lon', topo_obj%lon, (/lon_dim_id/))
+    call write_attrs(ncid, lon_var_id, 'units', 'degrees')
+    topo_var_id = write_data(ncid, 'topo', topo_obj%topo, (/lon_dim_id,lat_dim_id/))
+    call write_attrs(ncid, topo_var_id, 'units', 'degrees')
+    topo_recon_id = write_data(ncid, 'topo_recon', topo_obj%topo_recon_2D, (/lon_dim_id,lat_dim_id/))
+    call write_attrs(ncid, topo_recon_id, 'units', 'degrees')
+    call close_dataset(ncid)
 
     call dealloc_all()
 
