@@ -17,7 +17,7 @@ contains
         type(topo_t), intent(inout) :: topo_obj
         real, dimension(size(coeffs,dim=1)) :: h_hat, Sol
         real, dimension(size(coeffs,dim=1),size(coeffs,dim=1)) :: M, Minv
-        integer :: nc, istat, nwork
+        integer :: nc, nd, istat, nwork
         integer, dimension(size(coeffs,dim=1)) :: ipiv
         real, dimension(size(coeffs,dim=1)) :: work
         real, dimension(size(coeffs,dim=2)) :: z_recon
@@ -25,10 +25,14 @@ contains
         logical, intent(in) :: mask(:,:)
 
         nc = size(coeffs,dim=1)
+        nd = size(coeffs,dim=2)
         nwork = size(coeffs,dim=1)
 
-        h_hat = matmul(coeffs, topo_obj%topo_tri)
-        M = matmul(coeffs, transpose(coeffs))
+        ! h_hat = matmul(coeffs, topo_obj%topo_tri)
+        ! M = matmul(coeffs, transpose(coeffs))
+
+        call dgemm('n','n', nc, 1, nd, 1.0, coeffs, nc, topo_obj%topo_tri, nd, 0.0, h_hat, nc)
+        call dgemm('n','t', nc, nc, nd, 1.0, coeffs, nc, coeffs, nc, 0.0, M, nc)
 
         ! could just replace M...
         Minv = M
@@ -47,8 +51,11 @@ contains
             stop LINALG_ERR
         end if
 
-        Sol = matmul(Minv, h_hat)
-        z_recon = matmul(transpose(coeffs), Sol)
+        ! Sol = matmul(Minv, h_hat)
+        ! z_recon = matmul(transpose(coeffs), Sol)
+
+        call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, Sol, nc)
+        call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, Sol, nc, 0.0, z_recon, nd)
 
         call recon_2D(topo_obj, z_recon, mask)
     end subroutine
@@ -76,7 +83,7 @@ contains
         end do
         topo_obj%topo_recon_2D = z_recon_2D
 
-        print *, shape(z_recon_2D)
+        ! print *, shape(z_recon_2D)
     end subroutine recon_2D
 
 end module lin_reg_mod
