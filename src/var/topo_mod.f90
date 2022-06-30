@@ -9,7 +9,7 @@ module topo_mod
 
     type :: topo_t
         real, dimension(:), allocatable :: lat, lon
-        real, dimension(:,:), allocatable :: topo
+        real, dimension(:,:), allocatable :: topo, lat_grid, lon_grid
     end type topo_t
 
 contains
@@ -91,6 +91,9 @@ contains
         if ((size(obj%lat) * size(obj%lon)) /= size(obj%topo)) then
             write(unit=error_unit, fmt='(A)') "Error: Gathered subpoints shapes do not match."
         end if
+
+        obj%lat_grid = spread(obj%lat, 1, size(obj%lon))
+        obj%lon_grid = spread(obj%lon, 2, size(obj%lat))
     end subroutine get_topo
 
     subroutine dealloc_obj(obj)

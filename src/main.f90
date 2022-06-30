@@ -3,6 +3,7 @@ program main
     use write_data_mod
     use utils_mod
     use topo_mod, only : topo_t, get_topo, dealloc_obj
+    use fourier_trans_mod, only : llgrid_t, set_triangle_verts
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
@@ -14,6 +15,8 @@ program main
     integer :: ncid, lat_dim_id, lon_dim_id, lat_var_id, lon_var_id, topo_var_id
 
     type(topo_t) :: topo_obj
+    type(llgrid_t) :: llgrid_obj
+    logical, dimension(:,:), allocatable :: mask
 
     ! hard-coded index for test.
     integer, parameter :: ref_idx = 441 !13680 
@@ -33,6 +36,8 @@ program main
 
     call rad_to_deg(lat_center)
     call rad_to_deg(lon_center)
+    call rad_to_deg(lat_vert)
+    call rad_to_deg(lon_vert)
 
     lat_ref = lat_center(ref_idx)
     lon_ref = lon_center(ref_idx)
@@ -53,18 +58,27 @@ program main
     call cpu_time(finish)
     print '("Time = ",f6.3," seconds.")',finish-start
 
-    print *, "Writing data output..."
-    ncid = create_dataset('output.nc')
-    lat_dim_id = create_dim(ncid, 'nlat', size(topo_obj%lat))
-    lon_dim_id = create_dim(ncid, 'nlon', size(topo_obj%lon))
-    lat_var_id = write_data(ncid, 'lat', topo_obj%lat, (/lat_dim_id/))
-    call write_attrs(ncid, lat_var_id, 'units', 'degrees')
-    lon_var_id = write_data(ncid, 'lon', topo_obj%lon, (/lon_dim_id/))
-    call write_attrs(ncid, lon_var_id, 'units', 'degrees')
-    topo_var_id = write_data(ncid, 'topo', topo_obj%topo, (/lon_dim_id,lat_dim_id/))
-    call write_attrs(ncid, topo_var_id, 'units', 'degrees')
-    call close_dataset(ncid)
+    ! print *, "Writing data output..."
+    ! ncid = create_dataset('output.nc')
+    ! lat_dim_id = create_dim(ncid, 'nlat', size(topo_obj%lat))
+    ! lon_dim_id = create_dim(ncid, 'nlon', size(topo_obj%lon))
+    ! lat_var_id = write_data(ncid, 'lat', topo_obj%lat, (/lat_dim_id/))
+    ! call write_attrs(ncid, lat_var_id, 'units', 'degrees')
+    ! lon_var_id = write_data(ncid, 'lon', topo_obj%lon, (/lon_dim_id/))
+    ! call write_attrs(ncid, lon_var_id, 'units', 'degrees')
+    ! topo_var_id = write_data(ncid, 'topo', topo_obj%topo, (/lon_dim_id,lat_dim_id/))
+    ! call write_attrs(ncid, topo_var_id, 'units', 'degrees')
+    ! call close_dataset(ncid)
 
+    print *, "Gathering points in the triangle..."
+    call set_triangle_verts(llgrid_obj, lat_vert(:,ref_idx), lon_vert(:,ref_idx))
+
+    allocate (mask(size(topo_obj%lat), size(topo_obj%lon)))
+    print *, shape(mask)
+    mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
+
+    print *, shape(mask)
+    print *, count(mask)
     call dealloc_all()
 
 contains
@@ -79,6 +93,8 @@ contains
         deallocate(topo_lat)
         deallocate(topo_lon)
         deallocate(topo_dat)
+
+        deallocate(mask)
 
         call dealloc_obj(topo_obj)
     end subroutine dealloc_all
