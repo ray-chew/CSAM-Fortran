@@ -42,6 +42,8 @@ test.*
 *.pyc
 *.ipynb
 *.json
+*.npy
+*.jpg
 
 # Output files
 *.nc
