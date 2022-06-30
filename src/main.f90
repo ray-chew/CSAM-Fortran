@@ -3,7 +3,7 @@ program main
     use write_data_mod
     use utils_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, dealloc_llgrid_obj
+    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
