@@ -74,7 +74,7 @@ contains
 
     subroutine get_coeffs(topo_obj, mask, coeffs)
         implicit none
-        type(topo_t), intent(in) :: topo_obj
+        type(topo_t), intent(inout) :: topo_obj
         logical, dimension(:,:), intent(in) :: mask
         real, dimension(count(mask)) :: lat_tri, lon_tri, topo_tri
         integer, dimension(count(mask)) :: II, JJ, JJ_tmp
@@ -104,7 +104,7 @@ contains
         N_cos = nhar_i * nhar_j
         N_sin = nhar_i * nhar_j - 1
 
-        allocate (tmp(N_cos + N_sin))
+        allocate (tmp(N_cos))
         allocate (coeffs(N_cos + N_sin, size(topo_tri)))
 
         do k=1,size(topo_tri)
@@ -116,8 +116,12 @@ contains
                 end do
             end do
             coeffs(1:N_cos,k) = cos(tmp)
-            coeffs(N_cos+1:N_cos+N_sin,k) = sin(tmp(1:size(tmp)))
+            coeffs(N_cos+1:N_cos+N_sin,k) = sin(tmp(2:size(tmp)))
         end do
+
+        topo_obj%lat_tri = lat_tri
+        topo_obj%lon_tri = lon_tri
+        topo_obj%topo_tri = topo_tri
 
     end subroutine get_coeffs
 
