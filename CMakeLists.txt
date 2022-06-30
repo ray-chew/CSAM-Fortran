@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
                 src/tools/error_status_mod.f90
                 src/tools/utils_mod.f90
 	            src/var/topo_mod.f90
+                src/math/fourier_trans_mod.f90
                 )
 target_include_directories(${PROJECT_NAME}
                             PUBLIC
