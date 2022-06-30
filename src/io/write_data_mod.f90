@@ -24,7 +24,7 @@ contains
         character(len=*), intent(in) :: fname
         integer :: ncid
 
-        call nc_check(nf90_create(fname, cmode=nf90_noclobber, ncid=ncid))
+        call nc_check(nf90_create(fname, cmode=nf90_clobber, ncid=ncid))
 
     end function create_dataset
 
