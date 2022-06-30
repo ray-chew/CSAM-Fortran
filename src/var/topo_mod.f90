@@ -8,8 +8,8 @@ module topo_mod
     public :: topo_t, get_topo, dealloc_topo_obj
 
     type :: topo_t
-        real, dimension(:), allocatable :: lat, lon
-        real, dimension(:,:), allocatable :: topo, lat_grid, lon_grid
+        real, dimension(:), allocatable :: lat, lon, lat_tri, lon_tri, topo_tri
+        real, dimension(:,:), allocatable :: topo, lat_grid, lon_grid, topo_recon_2D
     end type topo_t
 
 contains
@@ -102,7 +102,13 @@ contains
 
         deallocate(obj%lat)
         deallocate(obj%lon)
+        deallocate(obj%lat_grid)
+        deallocate(obj%lon_grid)
         deallocate(obj%topo)
+
+        deallocate(obj%lat_tri)
+        deallocate(obj%lon_tri)
+        deallocate(obj%topo_tri)
 
     end subroutine dealloc_topo_obj
 
