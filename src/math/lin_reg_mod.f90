@@ -2,6 +2,7 @@ module lin_reg_mod
     use :: topo_mod, only : topo_t
     use, intrinsic :: iso_fortran_env, only : error_unit
     use :: error_status, only : LINALG_ERR
+    use :: fourier_mod, only : recover_coeffs
 
     implicit none
 
@@ -15,7 +16,7 @@ contains
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
-        real, dimension(size(coeffs,dim=1)) :: h_hat, Sol
+        real, dimension(size(coeffs,dim=1)) :: h_hat, sol
         real, dimension(size(coeffs,dim=1),size(coeffs,dim=1)) :: M, Minv
         integer :: nc, nd, istat, nwork
         integer, dimension(size(coeffs,dim=1)) :: ipiv
@@ -51,13 +52,14 @@ contains
             stop LINALG_ERR
         end if
 
-        ! Sol = matmul(Minv, h_hat)
-        ! z_recon = matmul(transpose(coeffs), Sol)
+        ! sol = matmul(Minv, h_hat)
+        ! z_recon = matmul(transpose(coeffs), sol)
 
-        call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, Sol, nc)
-        call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, Sol, nc, 0.0, z_recon, nd)
+        call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, sol, nc)
+        call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, sol, nc, 0.0, z_recon, nd)
 
         call recon_2D(topo_obj, z_recon, mask)
+        call recover_coeffs(topo_obj, sol)
     end subroutine
 
     subroutine recon_2D(topo_obj, z_recon, mask)

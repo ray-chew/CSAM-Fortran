@@ -14,6 +14,7 @@ program main
     real :: lat_ref, lon_ref
     real :: start, finish
     integer :: ncid, lat_dim_id, lon_dim_id, lat_var_id, lon_var_id, topo_var_id, topo_recon_id
+    ! integer :: nhi_dim_id, nhj_dim_id, fcoeffs_var_id
 
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
@@ -24,7 +25,7 @@ program main
     ! 441 corresponds to the topography around the Elbrus mountain
 
     print *, "Reading grid data..."
-
+    call cpu_time(start)
     call get_fn(fn_grid, fn_topo)
     fn_grid = trim(fn_grid)
     fn_topo = trim(fn_topo)
@@ -53,6 +54,9 @@ program main
     print *, "Read topo_lon with shape: ", shape(topo_lon)
     print *, "Read topo_dat with shape: ", shape(topo_dat)
 
+    call cpu_time(finish)
+    print '("Read time = ",f6.3," seconds.")',finish-start
+
     call cpu_time(start)
     print *, "Gathering subpoints..."
     call get_topo(topo_lat, topo_lon, lat_ref, lon_ref, 2.0, topo_dat, topo_obj)
@@ -72,14 +76,23 @@ program main
     ncid = create_dataset('output.nc')
     lat_dim_id = create_dim(ncid, 'nlat', size(topo_obj%lat))
     lon_dim_id = create_dim(ncid, 'nlon', size(topo_obj%lon))
+
     lat_var_id = write_data(ncid, 'lat', topo_obj%lat, (/lat_dim_id/))
     call write_attrs(ncid, lat_var_id, 'units', 'degrees')
     lon_var_id = write_data(ncid, 'lon', topo_obj%lon, (/lon_dim_id/))
     call write_attrs(ncid, lon_var_id, 'units', 'degrees')
+
     topo_var_id = write_data(ncid, 'topo', topo_obj%topo, (/lon_dim_id,lat_dim_id/))
     call write_attrs(ncid, topo_var_id, 'units', 'degrees')
+
     topo_recon_id = write_data(ncid, 'topo_recon', topo_obj%topo_recon_2D, (/lon_dim_id,lat_dim_id/))
     call write_attrs(ncid, topo_recon_id, 'units', 'degrees')
+
+    ! nhi_dim_id = create_dim(ncid, 'nhar_i', size(topo_obj%nhar_i))
+    ! nhi_dim_id = create_dim(ncid, 'nhar_j', size(topo_obj%nhar_j))
+    ! fcoeffs_var_id = write_data(ncid, 'fourier coefficients', topo_obj%fcoeffs, (/nhi_dim_id,nhj_dim_id/))
+    ! call write_attrs(ncid, fcoeffs_var_id, 'complex number', 'real, imag')
+
     call close_dataset(ncid)
 
     call cpu_time(finish)
