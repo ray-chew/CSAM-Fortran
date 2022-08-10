@@ -95,18 +95,11 @@ contains
 
         II = ceiling((lat_tri - minval(lat_tri)) / d_lat)
         JJ = ceiling((lon_tri - minval(lon_tri)) / d_lon)
-        ! II = ceiling((lat_tri - sum(lat_tri)/size(lat_tri)) / d_lat)
-        ! JJ = ceiling((lon_tri - sum(lon_tri)/size(lon_tri)) / d_lon)
         
         Ni = get_N_unique(II)
         JJ_tmp = JJ
         call ord_sort(JJ_tmp)
         Nj = get_N_unique(JJ_tmp)
-
-        ! II = II - sum(II) / size(II)
-        ! JJ = JJ - sum(JJ) / size(JJ)
-        ! Ni = Ni / 2 !- 1
-        ! Nj = Nj / 2 !s- 1
 
         ! N_cos = nhar_i * nhar_j
         ! N_sin = nhar_i * nhar_j - 1
@@ -115,8 +108,6 @@ contains
 
         allocate (tmp(nhar_i * nhar_j))
         allocate (coeffs(N_cos + N_sin, size(topo_tri)))
-        ! allocate (coeffs(N_cos, size(topo_tri)))
-        ! allocate (tmp_coeffs(N_cos + N_sin, size(topo_tri)))
 
         allocate (c_cos(N_cos))
         allocate (c_sin(N_sin))
@@ -127,7 +118,6 @@ contains
             l = 1
             m = 1
             n = 1
-            ! do i=-nhar_i/2,nhar_i/2-1
             do i=0,nhar_i-1
                 ! do j=0,nhar_j-1
                 do j=-nhar_j/2,nhar_j/2-1
@@ -154,14 +144,8 @@ contains
                 end do
             end do
 
-            ! print *, m, n
             coeffs(1:N_cos,k) = c_cos
             coeffs(N_cos+1:N_cos+N_sin,k) = c_sin
-
-            ! coeffs(1:N_cos,k) = cos(tmp)
-            ! coeffs(N_cos+1:N_cos+N_sin,k) = sin(tmp(2:size(tmp)))
-            ! coeffs(N_cos+1:N_cos+nhar_j/2,k) = sin(tmp(1:nhar_j/2))
-            ! coeffs(N_cos+nhar_j/2+1:N_cos+N_sin,k) = sin(tmp(nhar_j/2+2:size(tmp)))
 
             ! do i=1,size(coeffs,dim=1)
             !     if (coeffs(i,k) == 0) then
