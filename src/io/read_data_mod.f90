@@ -1,7 +1,7 @@
 module read_data_mod
     use :: netcdf
     use :: netcdf_check, only : nc_check
-    use, intrinsic :: iso_fortran_env, only : error_unit
+    use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : ALLOCATION_ERR
     implicit none
 
@@ -67,7 +67,6 @@ contains
         end do
 
         allocate (array(dimlens(1),dimlens(2)), stat=stat)
-
         if (stat /= 0) then
             write(unit=error_unit, fmt='(2A)') "Error allocating 2D array for variable ", varname
             stop ALLOCATION_ERR
@@ -88,7 +87,7 @@ contains
         integer :: ndims
         integer :: i, stat
         integer, dimension(3) :: dimids, dimlens
-        real, dimension(:,:,:), allocatable, intent(out) :: array
+        real(kind=DP), dimension(:,:,:), allocatable, intent(out) :: array
 
         call nc_check(nf90_open(fname, nf90_nowrite, ncid))
         call nc_check(nf90_inq_varid(ncid, varname, varid))

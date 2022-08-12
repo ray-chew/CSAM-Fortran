@@ -5,8 +5,8 @@ module fourier_mod
     implicit none
 
     private
-    integer, parameter ::   nhar_i = 15, &
-                            nhar_j = 15
+    integer, parameter ::   nhar_i = 16, &
+                            nhar_j = 16
     real, parameter :: PI = acos(-1.0)
 
     public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, recover_coeffs
@@ -79,10 +79,10 @@ contains
         real, dimension(count(mask)) :: lat_tri, lon_tri, topo_tri
         integer, dimension(count(mask)) :: II, JJ, JJ_tmp
         real :: d_lat, d_lon
-        integer :: Ni, Nj, i, j, k, l, N_cos, N_sin
+        integer :: Ni, Nj, i, j, k, l, m, n, N_cos, N_sin
 
-        real, dimension(:), allocatable :: tmp
-        real, dimension(:,:), allocatable :: coeffs
+        real, dimension(:), allocatable :: tmp, c_cos, c_sin
+        real, dimension(:,:), allocatable, intent(out) :: coeffs
 
         ! we get lat, lon and topo in the triangle using the mask
         lat_tri = pack(topo_obj%lat_grid, mask=mask)
@@ -95,28 +95,63 @@ contains
 
         II = ceiling((lat_tri - minval(lat_tri)) / d_lat)
         JJ = ceiling((lon_tri - minval(lon_tri)) / d_lon)
-
+        
         Ni = get_N_unique(II)
         JJ_tmp = JJ
         call ord_sort(JJ_tmp)
         Nj = get_N_unique(JJ_tmp)
 
-        N_cos = nhar_i * nhar_j
+        ! N_cos = nhar_i * nhar_j
+        ! N_sin = nhar_i * nhar_j - 1
+        N_cos = nhar_i * nhar_j - nhar_j/2
         N_sin = nhar_i * nhar_j - 1
 
-        allocate (tmp(N_cos))
+        allocate (tmp(nhar_i * nhar_j))
         allocate (coeffs(N_cos + N_sin, size(topo_tri)))
+
+        allocate (c_cos(N_cos))
+        allocate (c_sin(N_sin))
+
+        print *, "Entering loop..."
 
         do k=1,size(topo_tri)
             l = 1
+            m = 1
+            n = 1
             do i=0,nhar_i-1
-                do j=0,nhar_j-1
+                ! do j=0,nhar_j-1
+                do j=-nhar_j/2,nhar_j/2-1
                     tmp(l) = 2.0 * PI * (i*II(k)/real(Ni) + j*JJ(k)/real(Nj))
+
+                    if (.not.(i == 0 .and. j < 0)) then
+                        c_cos(n) = cos(tmp(l))
+                        n = n + 1
+                    end if
+
+                    if (i /= 0 .or. j /= 0) then
+                        c_sin(m) = sin(tmp(l))
+                        m = m + 1
+                    end if
+
+                    ! if (cos(tmp(l)) == 0) then
+                    !     print *, l, k, i, j
+                    ! end if
+                    ! if (sin(tmp(l)) == 0) then
+                    !     print *, l, k, i, j
+                    ! end if
+
                     l = l + 1
                 end do
             end do
-            coeffs(1:N_cos,k) = cos(tmp)
-            coeffs(N_cos+1:N_cos+N_sin,k) = sin(tmp(2:size(tmp)))
+
+            coeffs(1:N_cos,k) = c_cos
+            coeffs(N_cos+1:N_cos+N_sin,k) = c_sin
+
+            ! do i=1,size(coeffs,dim=1)
+            !     if (coeffs(i,k) == 0) then
+            !         print *, i, k
+            !     end if
+            ! end do
         end do
 
         topo_obj%lat_tri = lat_tri

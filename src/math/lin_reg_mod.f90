@@ -41,14 +41,14 @@ contains
         call dgetrf(nc,nc,Minv,nc,ipiv,istat)
 
         if (istat /= 0) then
-            write(unit=error_unit, fmt='(A)') "Triangulation of matrix unsuccessful!" 
+            write(unit=error_unit, fmt='(A128,I5)') adjustl(trim("Triangulation of matrix unsuccessful! Error code: ")), istat
             stop LINALG_ERR
         end if
 
         call dgetri(nc,Minv,nc,ipiv,work,nwork,istat)
 
         if (istat /= 0) then
-            write(unit=error_unit, fmt='(A)') "Inversion of matrix unsuccessful!" 
+            write(unit=error_unit, fmt='(A128,I5)') "Inversion of matrix unsuccessful! Error code: ", istat 
             stop LINALG_ERR
         end if
 

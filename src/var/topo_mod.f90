@@ -1,5 +1,5 @@
 module topo_mod
-    use, intrinsic :: iso_fortran_env, only : error_unit
+    use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : ALLOCATION_ERR
     implicit none
 
@@ -22,7 +22,7 @@ contains
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon      
         real, intent(in) :: clat, clon, width
-        real, dimension(:,:,:), intent(inout) :: topo
+        real(kind=DP), dimension(:,:,:), intent(inout) :: topo
 
         integer :: nrecs, nlat, nlon
         integer :: i, j, stat
@@ -36,6 +36,9 @@ contains
         ! get the outer-most axis of the lat-lon grid
         nlat = size(lat, dim=1)
         nlon = size(lon, dim=1)
+
+        lat_indices = .false.
+        lon_indices = .false.
 
         ! get the number of records
         nrecs = size(topo,dim=3)

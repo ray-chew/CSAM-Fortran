@@ -5,12 +5,13 @@ program main
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
     use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
     use lin_reg_mod, only : do_lin_reg
+    use iso_fortran_env, only : DP => real64
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
     real, dimension(:), allocatable :: lat_center, lon_center
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
-    real, dimension(:,:,:), allocatable :: topo_dat
+    real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: lat_ref, lon_ref
     real :: start, finish
     integer :: ncid, lat_dim_id, lon_dim_id, lat_var_id, lon_var_id, topo_var_id, topo_recon_id
