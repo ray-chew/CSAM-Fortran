@@ -9,7 +9,7 @@ module fourier_mod
                             nhar_j = 16
     real, parameter :: PI = acos(-1.0)
 
-    public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
+    public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, recover_coeffs
 
     type :: llgrid_t
         real :: lat_res, lon_res
@@ -161,18 +161,25 @@ contains
 
     end subroutine get_coeffs
 
-    ! elemental function cos_all(x) result(y)
-    !     implicit none
-    !     real, intent(in) :: x
-    !     real :: y
-    !     y = cos(x)
-    ! end function cos_all
 
-    ! elemental function sin_all(x) result (y)
-    !     implicit none
-    !     real, intent(in) :: x
-    !     real :: y
-    !     y = sin(x)
-    ! end function sin_all
+    subroutine recover_coeffs(topo_obj, sol)
+        implicit none
+        type(topo_t), intent(inout) :: topo_obj
+        real, dimension(:), intent(in) :: sol
+
+        complex, allocatable :: recov_coeffs(:), recov_coeffs_ij(:,:)
+        integer :: mid = nhar_i * nhar_i
+
+        allocate (recov_coeffs(mid))
+ 
+        recov_coeffs(2:mid) = cmplx(sol(2:mid), sol(mid+1:size(sol))) / 2.0
+        recov_coeffs(1) = cmplx(sol(1))
+
+        recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
+
+        topo_obj%nhar_i = nhar_i
+        topo_obj%nhar_j = nhar_j
+        topo_obj%fcoeffs = recov_coeffs_ij
+    end subroutine recover_coeffs
 
 end module fourier_mod

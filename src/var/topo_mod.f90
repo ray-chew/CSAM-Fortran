@@ -10,6 +10,9 @@ module topo_mod
     type :: topo_t
         real, dimension(:), allocatable :: lat, lon, lat_tri, lon_tri, topo_tri
         real, dimension(:,:), allocatable :: topo, lat_grid, lon_grid, topo_recon_2D
+
+        integer :: nhar_i, nhar_j
+        complex, dimension(:,:), allocatable :: fcoeffs
     end type topo_t
 
 contains
@@ -41,6 +44,12 @@ contains
         nrecs = size(topo,dim=3)
         ! nrecs = 27
 
+        lat_indices = .false.
+        lon_indices = .false.
+
+        print *, count(lat_indices)
+        print *, count(lon_indices)
+
         ! we suppose that the allocation of the temporary 2D arrays will not throw an error.
         allocate (tmp_lat(nlat))
         allocate (tmp_lon(nlon))
@@ -62,6 +71,8 @@ contains
 
             tmp_indices = (abs(lat_grid - clat) <= width)
             tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+
+            print *, count(tmp_indices)
             
             tmp_lat = .false.
             do j=1,nlon
@@ -69,11 +80,15 @@ contains
             end do
             lat_indices(:,i) = tmp_lat
 
+            print *, count(tmp_lat)
+
             tmp_lon = .false.
             do j=1,nlat
                 tmp_lon = tmp_lon .or. tmp_indices(:,j)
             end do
             lon_indices(:,i) = tmp_lon
+
+            print *, count(tmp_lon)
 
             ! Why do we need to flip the latitude axis?
             tmp_indices_3D(:,:,i) = tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
@@ -82,6 +97,9 @@ contains
         obj%lat  = pack(lat,  lat_indices)
         obj%lon  = pack(lon,  lon_indices)
 
+        print *, "obj%lat size: ", size(obj%lat)
+        print *, "obj%lon size: ", size(obj%lon)
+
         allocate (tmp_topo(size(obj%lat) * size(obj%lon)))
         
         tmp_topo = pack(topo, tmp_indices_3D)
@@ -89,8 +107,6 @@ contains
         obj%topo = reshape(tmp_topo, shape=(/size(obj%lon),size(obj%lat)/), order=(/1,2/))
         obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
 
-        print *, "obj%lat size: ", size(obj%lat)
-        print *, "obj%lon size: ", size(obj%lon)
         if ((size(obj%lat) * size(obj%lon)) /= size(obj%topo)) then
             write(unit=error_unit, fmt='(A)') "Error: Gathered subpoints shapes do not match."
         end if
