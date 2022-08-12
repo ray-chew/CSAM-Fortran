@@ -104,7 +104,7 @@ contains
         ! N_cos = nhar_i * nhar_j
         ! N_sin = nhar_i * nhar_j - 1
         N_cos = nhar_i * nhar_j - nhar_j/2
-        N_sin = nhar_i * nhar_j - 1
+        N_sin = nhar_i * nhar_j - nhar_j/2 - 1
 
         allocate (tmp(nhar_i * nhar_j))
         allocate (coeffs(N_cos + N_sin, size(topo_tri)))
@@ -128,10 +128,11 @@ contains
                         n = n + 1
                     end if
 
-                    if (i /= 0 .or. j /= 0) then
+                    if (.not.(i == 0 .and. j <= 0)) then
                         c_sin(m) = sin(tmp(l))
                         m = m + 1
                     end if
+
 
                     ! if (cos(tmp(l)) == 0) then
                     !     print *, l, k, i, j
