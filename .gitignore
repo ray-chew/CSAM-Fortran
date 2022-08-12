@@ -36,11 +36,9 @@ data/*
 build/*
 test/*
 
-# Test files, scripts, and notebooks
+# Test files and output
 test.*
-*.py
 *.pyc
-*.ipynb
 *.json
 *.npy
 *.jpg
