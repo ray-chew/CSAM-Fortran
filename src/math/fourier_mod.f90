@@ -1,13 +1,13 @@
 module fourier_mod
     use :: topo_mod, only : topo_t
     use :: utils_mod, only : get_N_unique
+    use :: const_mod, only : PI
     use :: stdlib_sorting, only : ord_sort
     implicit none
 
     private
     integer, parameter ::   nhar_i = 16, &
                             nhar_j = 16
-    real, parameter :: PI = acos(-1.0)
 
     public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, recover_coeffs
 

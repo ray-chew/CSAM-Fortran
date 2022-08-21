@@ -1,11 +1,11 @@
 module utils_mod
     use, intrinsic :: iso_fortran_env, only : error_unit
     use :: error_status, only : COMMAND_LINE_ERR
+    use :: const_mod, only : PI
     ! use :: stdlib_sorting, only : ord_sort
     implicit none
 
     private
-    real, parameter :: PI = acos(-1.0)
 
     public :: get_fn, rad_to_deg, get_N_unique
 

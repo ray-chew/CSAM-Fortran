@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
                 src/io/read_data_mod.f90
                 src/io/write_data_mod.f90
                 src/io/netcdf_check_mod.f90
+                src/tools/const_mod.f90
                 src/tools/error_status_mod.f90
                 src/tools/utils_mod.f90
 	            src/var/topo_mod.f90
