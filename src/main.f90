@@ -22,7 +22,8 @@ program main
     logical, dimension(:,:), allocatable :: mask
 
     ! hard-coded index for test.
-    integer, parameter :: ref_idx = 441 !13680 
+    ! integer, parameter :: ref_idx = 441 !13680 
+    integer, parameter :: ref_idx = 4632 ! Firehorn, Switzerland 
     ! 441 corresponds to the topography around the Elbrus mountain
 
     print *, "Reading grid data..."

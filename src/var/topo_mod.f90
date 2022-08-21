@@ -63,7 +63,7 @@ contains
         end if
 
         ! do i=1,nrecs
-        do i=26,27
+        do i=23,26
             print *, "nrec = ", i
             lat_grid = spread(lat(:,i), 1, nlon)
             lon_grid = spread(lon(:,i), 2, nlat)
