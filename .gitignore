@@ -35,6 +35,7 @@
 data/*
 build/*
 test/*
+*.ipynb_checkpoints*
 
 # Test files and output
 test.*
