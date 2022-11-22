@@ -7,6 +7,12 @@ find_package(LAPACK REQUIRED)
 find_package(fortran_stdlib REQUIRED)
 find_package(OpenMP REQUIRED)
 
+find_path (NETCDFF_INCLUDES_F90 netcdff.mod HINTS NETCDFF_DIR NETCDFF_DIR)
+message(" inc ff =  ${NETCDFF_INCLUDES_F90}  ")
+find_library (NETCDFF_LIBRARIES_F90  NAMES netcdff HINTS NETCDFF_DIR )
+message(" lib ff=  ${NETCDFF_LIBRARIES_F90}  ")
+mark_as_advanced(NETCDF_LIBRARIES_F90)
+
 set(CMAKE_Fortran_MODULE_DIRECTORY
     ${CMAKE_BINARY_DIR}/modules)
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -36,7 +42,7 @@ target_include_directories(${PROJECT_NAME}
                             )
 target_link_libraries(  ${PROJECT_NAME} 
                         PRIVATE
-                        "netcdff"
+                        netcdff
                         fortran_stdlib::fortran_stdlib
                         blas
                         lapack
