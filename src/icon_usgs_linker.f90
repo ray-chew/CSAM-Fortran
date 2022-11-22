@@ -22,8 +22,6 @@ program grid_linker
 
     integer :: ncid, nrec_dim_id, ncell_dim_id, link_var_id
 
-    call omp_set_num_threads(4)
-
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
     fn = trim(fn)
@@ -63,6 +61,13 @@ program grid_linker
 
     call cpu_time(start)
     wt_start = omp_get_wtime()
+
+    print *, "Entering meaty loop..."
+    !$OMP PARALLEL
+    !$OMP SINGLE
+    print *, "Number of OMP threads used: ", omp_get_num_threads()
+    !$OMP END SINGLE
+    !$OMP END PARALLEL
 
     !$OMP PARALLEL DO
     do i = 1, Ncells
