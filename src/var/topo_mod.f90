@@ -5,7 +5,7 @@ module topo_mod
 
     private
 
-    public :: topo_t, get_topo, dealloc_topo_obj
+    public :: topo_t, get_topo, get_topo_idx, dealloc_topo_obj
 
     type :: topo_t
         real, dimension(:), allocatable :: lat, lon, lat_tri, lon_tri, topo_tri
@@ -16,6 +16,57 @@ module topo_mod
     end type topo_t
 
 contains
+
+    subroutine get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
+        implicit none
+        real, dimension(:,:), intent(in) :: lat
+        real, dimension(:,:), intent(in) :: lon
+        real, intent(in) :: clat
+        real, intent(in) :: clon
+        real, intent(in) :: width
+        integer, intent(in) :: ncell
+        integer, dimension(:,:), intent(out) :: icon_topo_links
+
+        integer :: nrecs, nlat, nlon
+        integer :: i, j, stat
+        logical, dimension(:,:), allocatable :: tmp_indices
+        logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
+        real, dimension(:,:), allocatable :: lat_grid, lon_grid
+
+        ! get the outer-most axis of the lat-lon grid
+        nlat = size(lat, dim=1)
+        nlon = size(lon, dim=1)
+
+        ! get the number of records
+        nrecs = size(lat,dim=2)
+
+        lat_indices = .false.
+        lon_indices = .false.
+
+        print *, count(lat_indices)
+        print *, count(lon_indices)
+
+        allocate (tmp_indices(nlon, nlat))
+
+        j = 1
+        do i=1,nrecs
+            ! print *, "nrec = ", i
+            lat_grid = spread(lat(:,i), 1, nlon)
+            lon_grid = spread(lon(:,i), 2, nlat)
+
+            tmp_indices = (abs(lat_grid - clat) <= width)
+            tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+
+            ! print *, count(tmp_indices)
+
+            if (count(tmp_indices) > 0) then
+                icon_topo_links(j,ncell) = i
+                j = j + 1
+            end if
+        end do
+
+
+    end subroutine get_topo_idx
 
     subroutine get_topo(lat, lon, clat, clon, width, topo, obj)
         implicit none
@@ -47,8 +98,8 @@ contains
         lat_indices = .false.
         lon_indices = .false.
 
-        print *, count(lat_indices)
-        print *, count(lon_indices)
+        ! print *, count(lat_indices)
+        ! print *, count(lon_indices)
 
         ! we suppose that the allocation of the temporary 2D arrays will not throw an error.
         allocate (tmp_lat(nlat))

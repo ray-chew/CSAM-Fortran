@@ -5,13 +5,65 @@ module utils_mod
     ! use :: stdlib_sorting, only : ord_sort
     implicit none
 
-    private
+    interface get_fn
+        module procedure get_nml_fn
+        module procedure get_grid_fn
+    end interface get_fn
 
-    public :: get_fn, rad_to_deg, get_N_unique
+    private
+    public :: get_fn, get_namelist, rad_to_deg, get_N_unique, flags_t
+
+    type :: flags_t
+        logical :: debug
+    end type flags_t
 
 contains
 
-    subroutine get_fn(fn_grid, fn_topo)
+    ! ref: https://cyber.dabamos.de/programming/modernfortran/namelists.html
+    subroutine get_namelist(fn, fn_grid,fn_topo, flags)
+        !! Reads Namelist from given file.
+        character(len=*),  intent(in)    :: fn
+        character(len=*),  intent(out)   :: fn_grid
+        character(len=*),  intent(out)   :: fn_topo
+        type(flags_t),     intent(out)   :: flags
+        integer                          :: stat
+        integer                          :: unit
+
+        ! Namelist definition.
+        namelist /USERDATA/ fn_grid, fn_topo, flags
+
+        ! Check whether file exists.
+        inquire (file=fn, iostat=stat)
+
+        if (stat /= 0) then
+            write (error_unit, '("Error: input file ", a, " does not exist")') fn
+            return
+        end if
+
+        ! Open and read Namelist file.
+        open (action='read', file=fn, iostat=stat, newunit=unit)
+        read (nml=USERDATA, iostat=stat, unit=unit)
+        ! print *, "Stat = ", stat
+        ! if (stat /= 0) write (error_unit, '("Error: invalid Namelist format")')
+
+        close (unit)
+    end subroutine get_namelist
+
+
+    subroutine get_nml_fn(fn)
+        implicit none
+        character(len=*), intent(out) :: fn
+
+        if (command_argument_count() /= 1) then
+            write(unit=error_unit, fmt='(A)') "Argument error: Expected 1 input arguments."
+            stop COMMAND_LINE_ERR
+        end if
+
+        call get_command_argument(1, fn)
+
+    end subroutine get_nml_fn
+
+    subroutine get_grid_fn(fn_grid, fn_topo)
         implicit none
         character(len=*), intent(out) :: fn_grid
         character(len=*), intent(out) :: fn_topo
@@ -24,7 +76,7 @@ contains
         call get_command_argument(1, fn_grid)
         call get_command_argument(2, fn_topo)
 
-    end subroutine get_fn
+    end subroutine get_grid_fn
 
 
     elemental subroutine rad_to_deg(value)

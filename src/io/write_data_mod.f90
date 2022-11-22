@@ -14,6 +14,7 @@ module write_data_mod
     interface write_data
         module procedure write_1D
         module procedure write_2D
+        module procedure write_2D_int
         ! we do not need to write 3D datasets for now...
         ! module procedure write_3D
 
@@ -63,6 +64,17 @@ contains
     end function create_dim
 
 
+    function get_dim_id(ncid, dimname) result(dimid)
+        implicit none
+        integer, intent(in) :: ncid
+        character(len=*), intent(in) :: dimname
+        integer :: dimid
+
+        call nc_check(nf90_inq_dimid(ncid, dimname, dimid))
+
+    end function get_dim_id
+
+
     function write_1D(ncid, varname, array, dimids) result(varid)
         implicit none
 
@@ -101,6 +113,23 @@ contains
         call nc_check(nf90_redef(ncid))
 
     end function write_2D
+
+    function write_2D_int(ncid, varname, array, dimids) result(varid)
+        implicit none
+
+        character(len=*), intent(in) :: varname
+        integer, intent(in) :: ncid
+        integer, dimension(:), intent(in) :: dimids
+        integer, dimension(:,:), intent(in) :: array
+        integer :: varid
+
+        ! We store variables as single precision!
+        call nc_check(nf90_def_var(ncid, varname, nf90_int, dimids, varid))
+        call nc_check(nf90_enddef(ncid))
+        call nc_check(nf90_put_var(ncid, varid, array))
+        call nc_check(nf90_redef(ncid))
+
+    end function write_2D_int
 
     ! function write_2D_cmplx(ncid, varname, array, dimids) result(varid)
     !     implicit none
