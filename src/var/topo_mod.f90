@@ -43,8 +43,8 @@ contains
         lat_indices = .false.
         lon_indices = .false.
 
-        print *, count(lat_indices)
-        print *, count(lon_indices)
+        ! print *, count(lat_indices)
+        ! print *, count(lon_indices)
 
         allocate (tmp_indices(nlon, nlat))
 

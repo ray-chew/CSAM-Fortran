@@ -3,6 +3,7 @@ program grid_linker
     use write_data_mod
     use utils_mod
     use topo_mod
+    use omp_lib
     use, intrinsic :: iso_fortran_env, only : error_unit
 
     implicit none
@@ -17,9 +18,11 @@ program grid_linker
     real, dimension(:), allocatable :: lat_center, lon_center
     real, dimension(:,:), allocatable :: topo_lat, topo_lon
     real :: clat, clon
+    real :: start, finish, wt_start, wt_finish
 
     integer :: ncid, nrec_dim_id, ncell_dim_id, link_var_id
 
+    call omp_set_num_threads(4)
 
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
@@ -52,18 +55,28 @@ program grid_linker
     ! print *, "Read topo_dat with shape: ", shape(topo_dat)
 
     Ncells = size(lat_center)
-    Ncells = 1
+    Ncells = 4
     Nrecs = size(topo_lat, dim=2)
     !!! IN FORTRAN, OUTERMOST INDEX IS THE FASTEST !!!
     allocate (icon_topo_links(Nrecs,Ncells))
     icon_topo_links = 0
 
+    call cpu_time(start)
+    wt_start = omp_get_wtime()
+
+    !$OMP PARALLEL DO
     do i = 1, Ncells
         ! print *, "Ncell = ", i
         clat = lat_center(i)
         clon = lon_center(i)
         call get_topo_idx(topo_lat, topo_lon, clat, clon, 2.0, i, icon_topo_links)
     end do
+    !$OMP END PARALLEL DO
+
+    call cpu_time(finish)
+    wt_finish = omp_get_wtime()
+    print '("CPU time taken = ",f6.3," seconds.")', finish-start
+    print '("Wall time taken = ",f6.3," seconds.")', wt_finish-wt_start
 
     print *, "End preprocessing grid data..."
     print *, "Writing preprocessed grid data..."
