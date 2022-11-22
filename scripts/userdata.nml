@@ -1,0 +1,6 @@
+! userdata.nml
+&USERDATA
+    fn_grid = "/home/ray/git-projects/trifourtopo/data/icon_grid_0012_R02B04_G.nc"
+    fn_topo = "/home/ray/git-projects/trifourtopo/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
+    flags%debug = .false.
+!

@@ -14,7 +14,7 @@ file(MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY})
 add_compile_options(-g -Wall -Wextra -fdefault-real-8)
 
 add_executable(${PROJECT_NAME} 
-                src/main.f90 
+                src/icon_usgs_linker.f90
                 src/io/read_data_mod.f90
                 src/io/write_data_mod.f90
                 src/io/netcdf_check_mod.f90

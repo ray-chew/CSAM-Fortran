@@ -33,7 +33,7 @@
 
 # Data, test, and build directories
 data/*
-build/*
+build*/
 test/*
 *.ipynb_checkpoints*
 
