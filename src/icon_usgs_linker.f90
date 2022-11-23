@@ -69,7 +69,7 @@ program grid_linker
     !$OMP END SINGLE
     !$OMP END PARALLEL
 
-    !$OMP PARALLEL DO
+    !$OMP PARALLEL DO SHARED(topo_lat, topo_lon, icon_topo_links) PRIVATE(i, clat, clon)
     do i = 1, Ncells
         ! print *, "Ncell = ", i
         clat = lat_center(i)
