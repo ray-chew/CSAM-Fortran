@@ -1,6 +1,7 @@
 module topo_mod
     use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : ALLOCATION_ERR
+    use omp_lib
     implicit none
 
     private
@@ -17,13 +18,13 @@ module topo_mod
 
 contains
 
-    subroutine get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
+    recursive subroutine get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
         implicit none
         real, dimension(:,:), intent(in) :: lat
         real, dimension(:,:), intent(in) :: lon
         real, intent(in) :: clat
         real, intent(in) :: clon
-        real, intent(in) :: width
+        real, intent(inout) :: width
         integer, intent(in) :: ncell
         integer, dimension(:,:), intent(out) :: icon_topo_links
 
@@ -65,6 +66,11 @@ contains
             end if
         end do
 
+        if (j == 1) then
+            print *, "Doubling width for: thread num ", omp_get_thread_num(), "on grid cell", ncell, "with width", width
+            width = 8.0 * width
+            call get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
+        end if
 
     end subroutine get_topo_idx
 

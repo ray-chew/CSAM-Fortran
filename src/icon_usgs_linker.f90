@@ -17,7 +17,7 @@ program grid_linker
 
     real, dimension(:), allocatable :: lat_center, lon_center
     real, dimension(:,:), allocatable :: topo_lat, topo_lon
-    real :: clat, clon
+    real :: clat, clon, width
     real :: start, finish, wt_start, wt_finish
 
     integer :: ncid, nrec_dim_id, ncell_dim_id, link_var_id
@@ -69,19 +69,21 @@ program grid_linker
     !$OMP END SINGLE
     !$OMP END PARALLEL
 
-    !$OMP PARALLEL DO SHARED(topo_lat, topo_lon, icon_topo_links) PRIVATE(i, clat, clon)
+    width = 2.0
+
+    !$OMP PARALLEL DO SHARED(topo_lat, topo_lon, icon_topo_links) PRIVATE(i, clat, clon) FIRSTPRIVATE(width)
     do i = 1, Ncells
         ! print *, "Ncell = ", i
         clat = lat_center(i)
         clon = lon_center(i)
-        call get_topo_idx(topo_lat, topo_lon, clat, clon, 2.0, i, icon_topo_links)
+        call get_topo_idx(topo_lat, topo_lon, clat, clon, width, i, icon_topo_links)
     end do
     !$OMP END PARALLEL DO
 
     call cpu_time(finish)
     wt_finish = omp_get_wtime()
-    print '("CPU time taken = ",f6.3," seconds.")', finish-start
-    print '("Wall time taken = ",f6.3," seconds.")', wt_finish-wt_start
+    print *, "CPU time taken = ", finish-start, " seconds."
+    print *, "Wall time taken = ", wt_finish-wt_start, " seconds."
 
     print *, "End preprocessing grid data..."
     print *, "Writing preprocessed grid data..."
