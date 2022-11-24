@@ -7,8 +7,8 @@ find_package(LAPACK REQUIRED)
 find_package(fortran_stdlib REQUIRED)
 find_package(OpenMP REQUIRED)
 
-find_path (NETCDFF_INCLUDES_F90 netcdff.mod HINTS NETCDFF_DIR NETCDFF_DIR)
-message(" inc ff =  ${NETCDFF_INCLUDES_F90}  ")
+find_path (NETCDFF_INCLUDES_F90 netcdf.mod HINTS NETCDFF_DIR NETCDFF_DIR)
+message(" inc ff =  ${NETCDFF_INCLUDES_F03}  ")
 find_library (NETCDFF_LIBRARIES_F90  NAMES netcdff HINTS NETCDFF_DIR )
 message(" lib ff=  ${NETCDFF_LIBRARIES_F90}  ")
 mark_as_advanced(NETCDF_LIBRARIES_F90)
@@ -31,18 +31,20 @@ add_executable(${PROJECT_NAME}
                 src/tools/const_mod.f90
                 src/tools/error_status_mod.f90
                 src/tools/utils_mod.f90
-	            src/var/topo_mod.f90
+	        src/var/topo_mod.f90
                 src/math/fourier_mod.f90
                 src/math/lin_reg_mod.f90
                 )
 
 target_include_directories(${PROJECT_NAME}
                             PUBLIC
-                            "/usr/include/"
+                            "/usr/include"
+			    "/home/atmodynamics/chew/spack/opt/spack/linux-scientific7-ivybridge/gcc-12.2.0/netcdf-fortran-4.6.0-6uqzogel65rvj4bpouxaibcmjd4o3kui/include"
+			    "$HOME/.local"
                             )
 target_link_libraries(  ${PROJECT_NAME} 
                         PRIVATE
-                        netcdff
+			${NETCDFF_LIBRARIES_F90}
                         fortran_stdlib::fortran_stdlib
                         blas
                         lapack

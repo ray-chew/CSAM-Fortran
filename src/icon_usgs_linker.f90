@@ -50,7 +50,7 @@ program grid_linker
     ! print *, "Read topo_dat with shape: ", shape(topo_dat)
 
     Ncells = size(lat_center)
-    Ncells = 4
+    ! Ncells = 4
     Nrecs = size(topo_lat, dim=2)
     !!! IN FORTRAN, OUTERMOST INDEX IS THE FASTEST !!!
     allocate (icon_topo_links(Nrecs,Ncells))

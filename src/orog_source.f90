@@ -69,10 +69,16 @@ program orog_source
     do i = 1, Ncells
         clat = lat_center(i)
         clon = lon_center(i)
+
+        print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, width, topo_dat, topo_obj, link_map(:,i), i)
-        call set_triangle_verts(llgrid_obj, lat_vert(:,ref_idx), lon_vert(:,ref_idx))
+        print *, "Setting triangular vertices"
+        call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
+        print *, "Masking points in triangle"
         mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
+        print *, "Getting coefficients"
         call get_coeffs(topo_obj, mask, coeffs)
+        print *, "Doing linear regression"
         call do_lin_reg(coeffs, topo_obj, mask)
     end do
 

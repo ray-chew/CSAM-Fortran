@@ -195,8 +195,7 @@ contains
         real, dimension(:), allocatable :: tmp_topo
         real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid, lat_nrecs, lon_nrecs
         real, dimension(:,:,:), allocatable :: topo_nrecs
-
-
+        
         ! get the outer-most axis of the lat-lon grid
         nlat = size(lat, dim=1)
         nlon = size(lon, dim=1)
@@ -215,6 +214,8 @@ contains
         allocate (tmp_indices(nlon, nlat))
         allocate (lat_indices(nlat,nrecs))
         allocate (lon_indices(nlon,nrecs))
+        allocate (lat_nrecs(nlat,nrecs))
+        allocate (lon_nrecs(nlon,nrecs))
 
         lat_indices = .false.
         lon_indices = .false.
@@ -223,6 +224,12 @@ contains
         tmp_indices_3D = .false.
         if (stat /= 0) then
             write(unit=error_unit, fmt='(A)') "Error allocating indices array for topo_obj"
+            stop ALLOCATION_ERR
+        end if
+
+        allocate (topo_nrecs(nlon,nlat,nrecs), stat=stat)
+        if (stat /= 0) then
+            write(unit=error_unit, fmt='(A)') "Error allocating nrecs array for topo_obj"
             stop ALLOCATION_ERR
         end if
 
@@ -239,6 +246,10 @@ contains
             lon_grid = spread(lon(:,nrec), 2, nlat)
             topo_grid = topo(:,:,nrec)
 
+            lat_nrecs(:,i) = lat(:,nrec)
+            lon_nrecs(:,i) = lon(:,nrec)
+            topo_nrecs(:,:,i) = topo(:,:,nrec)
+
             tmp_indices = (abs(lat_grid - clat) <= width)
             tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
             
@@ -248,7 +259,7 @@ contains
             end do
             lat_indices(:,i) = tmp_lat
 
-            print *, count(tmp_lat)
+            print *, "count(tmp_lat) = ", count(tmp_lat)
 
             tmp_lon = .false.
             do j=1,nlat
@@ -256,21 +267,23 @@ contains
             end do
             lon_indices(:,i) = tmp_lon
 
-            print *, count(tmp_lon)
+            print *, "count(tmp_lon) = ", count(tmp_lon)
 
             ! Why do we need to flip the latitude axis?
             tmp_indices_3D(:,:,i) = tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
         end do
 
-        obj%lat  = pack(lat,  lat_indices)
-        obj%lon  = pack(lon,  lon_indices)
+        print *, "nloop done"
+
+        obj%lat  = pack(lat_nrecs,  lat_indices)
+        obj%lon  = pack(lon_nrecs,  lon_indices)
 
         print *, "obj%lat size: ", size(obj%lat)
         print *, "obj%lon size: ", size(obj%lon)
 
         allocate (tmp_topo(size(obj%lat) * size(obj%lon)))
         
-        tmp_topo = pack(topo, tmp_indices_3D)
+        tmp_topo = pack(topo_nrecs, tmp_indices_3D)
         
         obj%topo = reshape(tmp_topo, shape=(/size(obj%lon),size(obj%lat)/), order=(/1,2/))
         obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
