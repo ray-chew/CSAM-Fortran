@@ -8,7 +8,7 @@ program orog_source
     use lin_reg_mod, only : do_lin_reg
 
     implicit none
-    character(len=1024) :: fn, fn_linker, fn_topo
+    character(len=128) :: fn, fn_linker, fn_topo
     type(flags_t) :: flags
     real, dimension(:), allocatable :: lat_center, lon_center
     integer, dimension(:,:), allocatable :: link_map

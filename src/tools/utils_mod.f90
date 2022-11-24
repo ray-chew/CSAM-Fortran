@@ -1,5 +1,5 @@
 module utils_mod
-    use, intrinsic :: iso_fortran_env, only : error_unit
+    use, intrinsic :: iso_fortran_env, only : error_unit, output_unit
     use :: error_status, only : COMMAND_LINE_ERR
     use :: const_mod, only : PI
     ! use :: stdlib_sorting, only : ord_sort
@@ -50,6 +50,8 @@ contains
         
         fn_grid = trim(fn_grid)
         fn_topo = trim(fn_topo)
+
+        write(unit=output_unit, nml=USERDATA)
 
     end subroutine get_namelist
 
