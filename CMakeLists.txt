@@ -19,12 +19,12 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 file(MAKE_DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_compile_options(-fopenmp -O3 -Wall -Wextra -fdefault-real-8)
+add_compile_options(-fopenmp -g -Wall -Wextra -fdefault-real-8)
 
 link_libraries("-fopenmp")
 
 add_executable(${PROJECT_NAME} 
-                src/icon_usgs_linker.f90
+                src/orog_source.f90
                 src/io/read_data_mod.f90
                 src/io/write_data_mod.f90
                 src/io/netcdf_check_mod.f90
