@@ -5,7 +5,7 @@ program main
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
     use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
     use lin_reg_mod, only : do_lin_reg
-    use iso_fortran_env, only : DP => real64
+    use, intrinsic :: iso_fortran_env, only : DP => real64
 
     implicit none
     character(len=1024) :: fn_grid, fn_topo
