@@ -47,6 +47,10 @@ contains
         ! if (stat /= 0) write (error_unit, '("Error: invalid Namelist format")')
 
         close (unit)
+        
+        fn_grid = trim(fn_grid)
+        fn_topo = trim(fn_topo)
+
     end subroutine get_namelist
 
 
@@ -60,6 +64,7 @@ contains
         end if
 
         call get_command_argument(1, fn)
+        fn = trim(fn)
 
     end subroutine get_nml_fn
 

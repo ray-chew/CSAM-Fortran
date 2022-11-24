@@ -24,10 +24,7 @@ program grid_linker
 
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
-    fn = trim(fn)
     call get_namelist(fn, fn_grid, fn_topo, flags)
-    fn_grid = trim(fn_grid)
-    fn_topo = trim(fn_topo)
 
     call read_data(fn_grid, "clat", lat_center)
     call read_data(fn_grid, "clon", lon_center)
