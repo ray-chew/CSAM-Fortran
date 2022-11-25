@@ -20,17 +20,18 @@ module utils_mod
 contains
 
     ! ref: https://cyber.dabamos.de/programming/modernfortran/namelists.html
-    subroutine get_namelist(fn, fn_grid,fn_topo, flags)
+    subroutine get_namelist(fn, fn_grid,fn_topo, fn_output, flags)
         !! Reads Namelist from given file.
         character(len=*),  intent(in)    :: fn
         character(len=*),  intent(out)   :: fn_grid
         character(len=*),  intent(out)   :: fn_topo
+        character(len=*),  intent(out)   :: fn_output
         type(flags_t),     intent(out)   :: flags
         integer                          :: stat
         integer                          :: unit
 
         ! Namelist definition.
-        namelist /USERDATA/ fn_grid, fn_topo, flags
+        namelist /USERDATA/ fn_grid, fn_topo, fn_output, flags
 
         ! Check whether file exists.
         inquire (file=fn, iostat=stat)
@@ -50,6 +51,7 @@ contains
         
         fn_grid = trim(fn_grid)
         fn_topo = trim(fn_topo)
+        fn_output = trim(fn_output)
 
         write(unit=output_unit, nml=USERDATA)
 

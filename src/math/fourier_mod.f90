@@ -6,10 +6,11 @@ module fourier_mod
     implicit none
 
     private
-    integer, parameter ::   nhar_i = 16, &
-                            nhar_j = 16
 
-    public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, recover_coeffs
+    public :: llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, recover_coeffs, nhar_i, nhar_j
+
+    integer, parameter ::   nhar_i = 12, &
+                            nhar_j = 12
 
     type :: llgrid_t
         real :: lat_res, lon_res

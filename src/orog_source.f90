@@ -4,19 +4,21 @@ program orog_source
     use write_data_mod
     use utils_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle
+    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
+    use error_status, only : ALLOCATION_ERR
 
     implicit none
-    character(len=128) :: fn, fn_linker, fn_topo
+    character(len=128) :: fn, fn_linker, fn_topo, fn_output
     type(flags_t) :: flags
     real, dimension(:), allocatable :: lat_center, lon_center
     integer, dimension(:,:), allocatable :: link_map
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish
-    integer :: ref_idx, i, Ncells
+    integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id
     real :: clat, clon, width
+    complex, allocatable :: fcoeffs(:,:,:)
 
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
@@ -25,7 +27,7 @@ program orog_source
     print *, "Reading grid and linker data..."
     call cpu_time(start)
     call get_fn(fn)
-    call get_namelist(fn, fn_linker, fn_topo, flags)
+    call get_namelist(fn, fn_linker, fn_topo, fn_output, flags)
 
     call read_data(fn_linker, "clat", lat_center)
     call read_data(fn_linker, "clon", lon_center)
@@ -58,14 +60,21 @@ program orog_source
     ! End Snippet
 
     Ncells = size(lat_center)
-    ncells = 4
-    width = 2.0
+    Ncells = 1
+    width = 5.0
 
     call cpu_time(start)
     print *, "Entering meaty loop..."
 
 
-    ! SHARED(topo_lat, topo_lon, topo_dat, topo_obj, link_map) PRIVATE(i, clat, clon, mask, coeffs) FIRSTPRIVATE(width)
+    allocate (fcoeffs(nhar_j,nhar_i,Ncells), stat=stat)
+    if (stat /= 0) then
+        write(unit=error_unit, fmt='(A)') "Error allocating nrecs array for topo_obj"
+        stop ALLOCATION_ERR
+    end if
+
+
+    ! SHARED(topo_lat, topo_lon, topo_dat, lat_vert, lon_vert, link_map, fcoeffs) PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj) FIRSTPRIVATE(width)
     do i = 1, Ncells
         clat = lat_center(i)
         clon = lon_center(i)
@@ -79,9 +88,21 @@ program orog_source
         print *, "Getting coefficients"
         call get_coeffs(topo_obj, mask, coeffs)
         print *, "Doing linear regression"
-        call do_lin_reg(coeffs, topo_obj, mask)
+        call do_lin_reg(coeffs, topo_obj, mask, .false.)
+        fcoeffs(:,:,i) = topo_obj%fcoeffs
     end do
 
+    call cpu_time(finish)
+    print *, "Done with meaty loop... Time taken: ", (finish-start)
 
+    print *, "Writing data output..."
+    ncid = create_dataset(fn_output)
+    nhi_dim_id = create_dim(ncid, 'nhar_i', nhar_i)
+    nhj_dim_id = create_dim(ncid, 'nhat_j', nhar_j)
+    ncell_dim_id = create_dim(ncid, 'ncell', Ncells)
+
+    stat = write_data(ncid, 'fcoeffs', fcoeffs, (/nhj_dim_id,nhi_dim_id,ncell_dim_id/))
+
+    call close_dataset(ncid)
 
 end program orog_source
