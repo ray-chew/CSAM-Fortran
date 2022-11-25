@@ -3,6 +3,7 @@ program grid_linker
     use write_data_mod
     use utils_mod
     use topo_mod
+    use triangle_mod
     use omp_lib
     use, intrinsic :: iso_fortran_env, only : error_unit
 
@@ -18,10 +19,13 @@ program grid_linker
 
     real, dimension(:), allocatable :: lat_center, lon_center
     real, dimension(:,:), allocatable :: topo_lat, topo_lon
-    real :: clat, clon, width
+    real, dimension(:,:), allocatable :: lat_vert, lon_vert
+    real :: clat, clon!, width
     real :: start, finish, wt_start, wt_finish
 
     integer :: ncid, nrec_dim_id, ncell_dim_id, link_var_id
+
+    type(llgrid_t) :: llgrid
 
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
@@ -29,13 +33,13 @@ program grid_linker
 
     call read_data(fn_grid, "clat", lat_center)
     call read_data(fn_grid, "clon", lon_center)
-    ! call read_data(fn_grid, "clat_vertices", lat_vert)
-    ! call read_data(fn_grid, "clon_vertices", lon_vert)
+    call read_data(fn_grid, "clat_vertices", lat_vert)
+    call read_data(fn_grid, "clon_vertices", lon_vert)
 
     call rad_to_deg(lat_center)
     call rad_to_deg(lon_center)
-    ! call rad_to_deg(lat_vert)
-    ! call rad_to_deg(lon_vert)
+    call rad_to_deg(lat_vert)
+    call rad_to_deg(lon_vert)
 
     if (size(lat_center) /= size(lon_center)) then
         write(unit = error_unit, fmt='(2A)') "Size of lat-lon entries for ICON grid are unequal."
@@ -67,14 +71,16 @@ program grid_linker
     !$OMP END SINGLE
     !$OMP END PARALLEL
 
-    width = 2.0
+    ! width = 2.0
 
-    !$OMP PARALLEL DO SHARED(topo_lat, topo_lon, icon_topo_links) PRIVATE(i, clat, clon) FIRSTPRIVATE(width)
+    !$OMP PARALLEL DO SHARED(topo_lat, topo_lon, icon_topo_links, lat_vert, lon_vert) PRIVATE(i, clat, clon, llgrid)
     do i = 1, Ncells
         ! print *, "Ncell = ", i
+
+        call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid)
         clat = lat_center(i)
         clon = lon_center(i)
-        call get_topo_idx(topo_lat, topo_lon, clat, clon, width, i, icon_topo_links)
+        call get_topo_idx(topo_lat, topo_lon, clat, clon, llgrid, i, icon_topo_links)
     end do
     !$OMP END PARALLEL DO
 

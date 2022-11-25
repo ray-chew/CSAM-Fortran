@@ -4,8 +4,9 @@ program orog_source
     use read_data_mod
     use write_data_mod
     use utils_mod
+    use triangle_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, nhar_i, nhar_j
+    use fourier_mod, only : get_coeffs, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
     use omp_lib
@@ -98,7 +99,7 @@ program orog_source
         if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
 
             fcoeffs(:,:,i) = nan
-            
+
         else
 
             ! print *, "Setting triangular vertices"

@@ -1,6 +1,7 @@
 module topo_mod
     use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : ALLOCATION_ERR
+    use :: triangle_mod, only : llgrid_t
     use omp_lib
     implicit none
 
@@ -23,19 +24,20 @@ module topo_mod
 
 contains
 
-    recursive subroutine get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
+    subroutine get_topo_idx(lat, lon, clat, clon, llgrid, ncell, icon_topo_links)
         implicit none
         real, dimension(:,:), intent(in) :: lat
         real, dimension(:,:), intent(in) :: lon
         real, intent(in) :: clat
         real, intent(in) :: clon
-        real, intent(inout) :: width
+        ! real, intent(inout) :: width
+        type(llgrid_t) :: llgrid
         integer, intent(in) :: ncell
         integer, dimension(:,:), intent(out) :: icon_topo_links
 
         integer :: nrecs, nlat, nlon
         integer :: i, j, stat
-        logical, dimension(:,:), allocatable :: tmp_indices
+        logical, dimension(:,:), allocatable :: tmp_indices, cond_lat, cond_lon
         logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         real, dimension(:,:), allocatable :: lat_grid, lon_grid
 
@@ -60,8 +62,11 @@ contains
             lat_grid = spread(lat(:,i), 1, nlon)
             lon_grid = spread(lon(:,i), 2, nlat)
 
-            tmp_indices = (abs(lat_grid - clat) <= width)
-            tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+            ! tmp_indices = (abs(lat_grid - clat) <= width)
+            cond_lat = ((llgrid%lat_min < lat_grid) .and. (lat_grid < llgrid%lat_max))
+            cond_lon = ((llgrid%lon_min < lon_grid) .and. (lon_grid < llgrid%lon_max))
+            tmp_indices = cond_lat .and. cond_lon
+            ! tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
 
             ! print *, count(tmp_indices)
 
@@ -71,11 +76,11 @@ contains
             end if
         end do
 
-        if (j == 1) then
-            print *, "Doubling width for: thread num ", omp_get_thread_num(), "on grid cell", ncell, "with width", width
-            width = 8.0 * width
-            call get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
-        end if
+        ! if (j == 1) then
+        !     print *, "Doubling width for: thread num ", omp_get_thread_num(), "on grid cell", ncell, "with width", width
+        !     width = 8.0 * width
+        !     call get_topo_idx(lat, lon, clat, clon, width, ncell, icon_topo_links)
+        ! end if
 
     end subroutine get_topo_idx
 
