@@ -1,0 +1,9 @@
+!userdata.nml
+&USERDATA
+
+    fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked.nc"
+    fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact.nc"
+    fn_output   = "/home/ray/git-projects/trifourtopo/data/output.nc"
+
+    flags%debug = .false.
+!
