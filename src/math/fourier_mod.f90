@@ -113,7 +113,7 @@ contains
         allocate (c_cos(N_cos))
         allocate (c_sin(N_sin))
 
-        print *, "Entering loop..."
+        ! print *, "Entering loop..."
 
         do k=1,size(topo_tri)
             l = 1

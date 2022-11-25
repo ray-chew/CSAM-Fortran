@@ -254,7 +254,7 @@ contains
             tmp_indices = (abs(lat_grid - clat) <= width)
             tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
 
-            print *, count(tmp_indices)
+            ! print *, count(tmp_indices)
             
             tmp_lat = .false.
             do j=1,nlon
@@ -262,7 +262,7 @@ contains
             end do
             lat_indices(:,i) = tmp_lat
 
-            print *, "count(tmp_lat) = ", count(tmp_lat)
+            ! print *, "count(tmp_lat) = ", count(tmp_lat)
 
             tmp_lon = .false.
             do j=1,nlat
@@ -270,13 +270,13 @@ contains
             end do
             lon_indices(:,i) = tmp_lon
 
-            print *, "count(tmp_lon) = ", count(tmp_lon)
+            ! print *, "count(tmp_lon) = ", count(tmp_lon)
 
             ! Why do we need to flip the latitude axis?
             tmp_indices_3D(:,:,i) = tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
         end do
 
-        print *, "nloop done"
+        ! print *, "nloop done"
 
         ! tmp_lon = .false.
         ! do j = 1, nrecs
@@ -300,8 +300,8 @@ contains
         obj%lat  = pack(lat_nrecs,  lat_indices)
         obj%lon  = pack(lon_nrecs,  lon_indices)
 
-        print *, "obj%lat size: ", size(obj%lat)
-        print *, "obj%lon size: ", size(obj%lon)
+        ! print *, "obj%lat size: ", size(obj%lat)
+        ! print *, "obj%lon size: ", size(obj%lon)
 
         allocate (tmp_topo(size(obj%lat) * size(obj%lon)))
         

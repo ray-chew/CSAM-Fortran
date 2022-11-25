@@ -7,6 +7,7 @@ program orog_source
     use fourier_mod, only : llgrid_t, set_triangle_verts, get_coeffs, points_in_triangle, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
+    use omp_lib
 
     implicit none
     character(len=128) :: fn, fn_linker, fn_topo, fn_output
@@ -15,7 +16,7 @@ program orog_source
     integer, dimension(:,:), allocatable :: link_map
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
-    real :: start, finish
+    real :: start, finish, wt_start, wt_finish
     integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id
     real :: clat, clon, width
     complex, allocatable :: fcoeffs(:,:,:)
@@ -60,11 +61,9 @@ program orog_source
     ! End Snippet
 
     Ncells = size(lat_center)
-    Ncells = 1
-    width = 5.0
+    ! Ncells = 1
+    width = 2.0
 
-    call cpu_time(start)
-    print *, "Entering meaty loop..."
 
 
     allocate (fcoeffs(nhar_j,nhar_i,Ncells), stat=stat)
@@ -73,28 +72,44 @@ program orog_source
         stop ALLOCATION_ERR
     end if
 
+    !$OMP PARALLEL
+    !$OMP SINGLE
+    print *, "Number of OMP threads used: ", omp_get_num_threads()
+    !$OMP END SINGLE
+    !$OMP END PARALLEL
 
-    ! SHARED(topo_lat, topo_lon, topo_dat, lat_vert, lon_vert, link_map, fcoeffs) PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj) FIRSTPRIVATE(width)
+
+    call cpu_time(start)
+    wt_start = omp_get_wtime()
+    print *, "Entering meaty loop..."
+
+    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_vert, lon_vert, link_map, fcoeffs) & 
+    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj) FIRSTPRIVATE(width)
     do i = 1, Ncells
         clat = lat_center(i)
         clon = lon_center(i)
 
-        print *, "Getting topo..."
+        ! print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, width, topo_dat, topo_obj, link_map(:,i), i)
-        print *, "Setting triangular vertices"
+        ! print *, "Setting triangular vertices"
         call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
-        print *, "Masking points in triangle"
+        ! print *, "Masking points in triangle"
         mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
-        print *, "Getting coefficients"
+        ! print *, "Getting coefficients"
         call get_coeffs(topo_obj, mask, coeffs)
-        print *, "Doing linear regression"
+        ! print *, "Doing linear regression"
         call do_lin_reg(coeffs, topo_obj, mask, .false.)
         fcoeffs(:,:,i) = topo_obj%fcoeffs
     end do
+    !$OMP END PARALLEL DO
 
     call cpu_time(finish)
-    print *, "Done with meaty loop... Time taken: ", (finish-start)
+    wt_finish = omp_get_wtime()
+    print *, "Done with meaty loop..."
+    print *, "CPU time taken = ", (finish - start)
+    print *, "Wall time taken = ", (wt_finish - wt_start)
 
+    print *, ""
     print *, "Writing data output..."
     ncid = create_dataset(fn_output)
     nhi_dim_id = create_dim(ncid, 'nhar_i', nhar_i)
