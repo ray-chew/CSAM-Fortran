@@ -10,6 +10,7 @@ program grid_linker
     character(len=1024)                        :: fn
     character(len=1024)                        :: fn_grid
     character(len=1024)                        :: fn_topo
+    character(len=1024)                        :: fn_output
     type(flags_t)                           :: flags
     integer                                 :: Ncells, Nrecs
     integer                                 :: i
@@ -24,7 +25,7 @@ program grid_linker
 
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
-    call get_namelist(fn, fn_grid, fn_topo, flags)
+    call get_namelist(fn, fn_grid, fn_topo, fn_output, flags)
 
     call read_data(fn_grid, "clat", lat_center)
     call read_data(fn_grid, "clon", lon_center)
