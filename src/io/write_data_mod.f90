@@ -1,7 +1,7 @@
 module write_data_mod
     use :: netcdf
     use :: netcdf_check, only : nc_check
-    use, intrinsic :: iso_fortran_env, only : error_unit
+    use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : NOT_ALLOCATED_ERR
 
     implicit none
@@ -15,10 +15,8 @@ module write_data_mod
         module procedure write_1D
         module procedure write_2D
         module procedure write_2D_int
-        ! we do not need to write 3D datasets for now...
-        ! module procedure write_3D
-
-        ! module procedure write_2D_cmplx
+        module procedure write_3D
+        module procedure write_3D_cmplx
     end interface write_data
 
 contains
@@ -131,22 +129,52 @@ contains
 
     end function write_2D_int
 
-    ! function write_2D_cmplx(ncid, varname, array, dimids) result(varid)
-    !     implicit none
+    function write_3D(ncid, varname, array, dimids) result(varid)
+        implicit none
 
-    !     character(len=*), intent(in) :: varname
-    !     integer, intent(in) :: ncid
-    !     integer, dimension(:), intent(in) :: dimids
-    !     complex, dimension(:,:), intent(in) :: array
-    !     integer :: varid
+        character(len=*), intent(in) :: varname
+        integer, intent(in) :: ncid
+        integer, dimension(:), intent(in) :: dimids
+        real(kind=DP), dimension(:,:,:), intent(in) :: array
+        integer :: varid
 
-    !     ! We store variables as single precision!
-    !     call nc_check(nf90_def_var(ncid, varname, nf90_float, dimids, varid))
-    !     call nc_check(nf90_enddef(ncid))
-    !     call nc_check(nf90_put_var(ncid, varid, array))
-    !     call nc_check(nf90_redef(ncid))
+        ! varname = trim(varname)
+        call nc_check(nf90_def_var(ncid, varname, nf90_double, dimids, varid))
+        call nc_check(nf90_enddef(ncid))
+        call nc_check(nf90_put_var(ncid, varid, array))
+        call nc_check(nf90_redef(ncid))
 
-    ! end function write_2D_cmplx
+    end function write_3D
+
+    function write_3D_cmplx(ncid, varname, array, dimids) result(stat)
+        implicit none
+
+        character(len=*), intent(in) :: varname
+        character(len=128) :: r_varname, re_ = "re_"
+        character(len=128) :: i_varname, im_ = "im_"
+        integer, intent(in) :: ncid
+        integer, dimension(:), intent(in) :: dimids
+        complex, dimension(:,:,:), intent(in) :: array
+        real(kind=DP), dimension(:,:,:), allocatable :: r_arr, i_arr
+        integer :: stat, re_id, im_id
+
+        r_arr = real(array)
+        i_arr = real(aimag(array))
+
+        r_varname = trim(re_) // trim(varname)
+        i_varname = trim(im_) // trim(varname)
+        ! r_varname = "real"
+        ! i_varname = "imag"
+
+        re_id = write_3D(ncid, trim(r_varname), r_arr, dimids)
+        call write_attrs(ncid, re_id, 'long_name', 're(fcoeffs)')
+
+        im_id = write_3D(ncid, trim(i_varname), i_arr, dimids)
+        call write_attrs(ncid, im_id, 'long_name', 'im(fcoeffs)')
+
+        stat = 1
+
+    end function write_3D_cmplx
 
     subroutine write_attrs(ncid, varid, name, values)
         implicit none
