@@ -126,7 +126,7 @@ contains
             print *, "nrec = ", i
             lat_grid = spread(lat(:,i), 1, nlon)
             lon_grid = spread(lon(:,i), 2, nlat)
-            topo_grid = topo(:,:,i)
+            ! topo_grid = topo(:,:,i)
 
             tmp_indices = (abs(lat_grid - clat) <= width)
             tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
@@ -219,6 +219,7 @@ contains
 
         lat_indices = .false.
         lon_indices = .false.
+        tmp_indices = .false.
 
         allocate (tmp_indices_3D(nlon, nlat, nrecs), stat=stat)
         tmp_indices_3D = .false.
@@ -244,7 +245,7 @@ contains
             
             lat_grid = spread(lat(:,nrec), 1, nlon)
             lon_grid = spread(lon(:,nrec), 2, nlat)
-            topo_grid = topo(:,:,nrec)
+            ! topo_grid = topo(:,:,nrec)
 
             lat_nrecs(:,i) = lat(:,nrec)
             lon_nrecs(:,i) = lon(:,nrec)
@@ -252,6 +253,8 @@ contains
 
             tmp_indices = (abs(lat_grid - clat) <= width)
             tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+
+            print *, count(tmp_indices)
             
             tmp_lat = .false.
             do j=1,nlon
@@ -274,6 +277,25 @@ contains
         end do
 
         print *, "nloop done"
+
+        ! tmp_lon = .false.
+        ! do j = 1, nrecs
+        !     tmp_lon = tmp_lon .or. lon_indices(:,j)
+        ! end do
+
+        ! print *, "count(tmp_lon) = ", count(tmp_lon)
+
+        ! this do loop takes care of the corner cases where topography data are in separate nfiles/nrecs but with the same lat or lon underlying grid.
+        ! put tolerance into nml flags
+        do i = 1, nrecs-1
+            if (all(abs(lat_nrecs(:,i) - lat_nrecs(:,i+1)) < 1e-5)) then
+                lat_indices(:,i+1) = .false.
+            end if
+            if (all(abs(lon_nrecs(:,i) - lon_nrecs(:,i+1)) < 1e-5)) then
+                lon_indices(:,i+1) = .false.
+            end if
+        end do
+
 
         obj%lat  = pack(lat_nrecs,  lat_indices)
         obj%lon  = pack(lon_nrecs,  lon_indices)
