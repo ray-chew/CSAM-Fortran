@@ -12,7 +12,7 @@ module lin_reg_mod
 
 contains
 
-    subroutine do_lin_reg(coeffs, topo_obj, mask)
+    subroutine do_lin_reg(coeffs, topo_obj, mask, recover_topo)
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
@@ -24,6 +24,10 @@ contains
         real, dimension(size(coeffs,dim=2)) :: z_recon
 
         logical, intent(in) :: mask(:,:)
+        logical, intent(in), optional :: recover_topo
+        ! if (.not. present(recover_topo)) then
+        !     recover_topo = .false.
+        ! end if 
 
         nc = size(coeffs,dim=1)
         nd = size(coeffs,dim=2)
@@ -52,14 +56,14 @@ contains
             stop LINALG_ERR
         end if
 
-        ! sol = matmul(Minv, h_hat)
-        ! z_recon = matmul(transpose(coeffs), sol)
-
         call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, sol, nc)
-        call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, sol, nc, 0.0, z_recon, nd)
-
-        call recon_2D(topo_obj, z_recon, mask)
         call recover_coeffs(topo_obj, sol)
+
+        if (recover_topo) then
+            call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, sol, nc, 0.0, z_recon, nd)
+            call recon_2D(topo_obj, z_recon, mask)
+        end if
+
     end subroutine
 
     subroutine recon_2D(topo_obj, z_recon, mask)
