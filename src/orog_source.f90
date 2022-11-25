@@ -1,5 +1,6 @@
 program orog_source
     use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
+    use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
     use read_data_mod
     use write_data_mod
     use utils_mod
@@ -18,12 +19,14 @@ program orog_source
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
     integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id
-    real :: clat, clon, width
+    real :: clat, clon, width, nan
     complex, allocatable :: fcoeffs(:,:,:)
 
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
     logical, dimension(:,:), allocatable :: mask
+
+    nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
 
     print *, "Reading grid and linker data..."
     call cpu_time(start)
@@ -91,15 +94,24 @@ program orog_source
 
         ! print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, width, topo_dat, topo_obj, link_map(:,i), i)
-        ! print *, "Setting triangular vertices"
-        call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
-        ! print *, "Masking points in triangle"
-        mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
-        ! print *, "Getting coefficients"
-        call get_coeffs(topo_obj, mask, coeffs)
-        ! print *, "Doing linear regression"
-        call do_lin_reg(coeffs, topo_obj, mask, .false.)
-        fcoeffs(:,:,i) = topo_obj%fcoeffs
+
+        if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
+
+            fcoeffs(:,:,i) = nan
+            
+        else
+
+            ! print *, "Setting triangular vertices"
+            call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
+            ! print *, "Masking points in triangle"
+            mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
+            ! print *, "Getting coefficients"
+            call get_coeffs(topo_obj, mask, coeffs)
+            ! print *, "Doing linear regression"
+            call do_lin_reg(coeffs, topo_obj, mask, .false.)
+            fcoeffs(:,:,i) = topo_obj%fcoeffs
+
+        end if
     end do
     !$OMP END PARALLEL DO
 
