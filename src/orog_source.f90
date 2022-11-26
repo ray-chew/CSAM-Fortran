@@ -20,7 +20,7 @@ program orog_source
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
     integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id
-    real :: clat, clon, width, nan
+    real :: clat, clon, nan
     complex, allocatable :: fcoeffs(:,:,:)
 
     type(topo_t) :: topo_obj
@@ -66,7 +66,7 @@ program orog_source
 
     Ncells = size(lat_center)
     ! Ncells = 1
-    width = 2.0
+    ! width = 2.0
 
 
 
@@ -92,9 +92,10 @@ program orog_source
     do i = 1, Ncells
         clat = lat_center(i)
         clon = lon_center(i)
+        get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj)
 
         ! print *, "Getting topo..."
-        call get_topo(topo_lat, topo_lon, clat, clon, width, topo_dat, topo_obj, link_map(:,i), i)
+        call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i)
 
         if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
 

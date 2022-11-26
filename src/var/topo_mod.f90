@@ -31,7 +31,7 @@ contains
         real, intent(in) :: clat
         real, intent(in) :: clon
         ! real, intent(inout) :: width
-        type(llgrid_t) :: llgrid
+        type(llgrid_t), intent(out) :: llgrid
         integer, intent(in) :: ncell
         integer, dimension(:,:), intent(out) :: icon_topo_links
 
@@ -84,17 +84,18 @@ contains
 
     end subroutine get_topo_idx
 
-    subroutine get_topo_by_search(lat, lon, clat, clon, width, topo, obj)
+    subroutine get_topo_by_search(lat, lon, clat, clon, llgrid, topo, obj)
         implicit none
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon      
-        real, intent(in) :: clat, clon, width
+        real, intent(in) :: clat, clon
         real(kind=DP), dimension(:,:,:), intent(inout) :: topo
+        type(llgrid_t), intent(out) :: llgrid
 
         integer :: nrecs, nlat, nlon
         integer :: i, j, stat
         logical, dimension(:), allocatable :: tmp_lat, tmp_lon
-        logical, dimension(:,:), allocatable :: tmp_indices
+        logical, dimension(:,:), allocatable :: tmp_indices, cond_lat, cond_lon
         logical, dimension(:,:,:), allocatable :: tmp_indices_3D
         logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         real, dimension(:), allocatable :: tmp_topo
@@ -133,8 +134,11 @@ contains
             lon_grid = spread(lon(:,i), 2, nlat)
             ! topo_grid = topo(:,:,i)
 
-            tmp_indices = (abs(lat_grid - clat) <= width)
-            tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+            ! tmp_indices = (abs(lat_grid - clat) <= width)
+            ! tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+            cond_lat = ((llgrid%lat_min < lat_grid) .and. (lat_grid < llgrid%lat_max))
+            cond_lon = ((llgrid%lon_min < lon_grid) .and. (lon_grid < llgrid%lon_max))
+            tmp_indices = cond_lat .and. cond_lon
 
             print *, count(tmp_indices)
             
@@ -180,19 +184,20 @@ contains
     end subroutine get_topo_by_search
 
 
-    subroutine get_topo_by_index(lat, lon, clat, clon, width, topo, obj, link_map, ncell)
+    subroutine get_topo_by_index(lat, lon, clat, clon, llgrid, topo, obj, link_map, ncell)
         implicit none
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon
-        real, intent(in) :: clat, clon, width
+        real, intent(in) :: clat, clon
         real(kind=DP), dimension(:,:,:), intent(in) :: topo
         integer, dimension(:), intent(in) :: link_map
         integer, intent(in) :: ncell
+        type(llgrid_t), intent(out) :: llgrid
 
         integer :: nrecs, nlat, nlon, nrec
         integer :: i, j, stat
         logical, dimension(:), allocatable :: tmp_lat, tmp_lon
-        logical, dimension(:,:), allocatable :: tmp_indices
+        logical, dimension(:,:), allocatable :: tmp_indices, cond_lat, cond_lon
         logical, dimension(:,:,:), allocatable :: tmp_indices_3D
         ! logical :: lat_indices(size(lat,dim=1)), lon_indices(size(lon,dim=1))
         ! logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
@@ -256,9 +261,11 @@ contains
             lon_nrecs(:,i) = lon(:,nrec)
             topo_nrecs(:,:,i) = topo(:,:,nrec)
 
-            tmp_indices = (abs(lat_grid - clat) <= width)
-            tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
-
+            ! tmp_indices = (abs(lat_grid - clat) <= width)
+            ! tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
+            cond_lat = ((llgrid%lat_min < lat_grid) .and. (lat_grid < llgrid%lat_max))
+            cond_lon = ((llgrid%lon_min < lon_grid) .and. (lon_grid < llgrid%lon_max))
+            tmp_indices = cond_lat .and. cond_lon
             ! print *, count(tmp_indices)
             
             tmp_lat = .false.
