@@ -37,12 +37,13 @@ build*/
 test/*
 *.ipynb_checkpoints*
 
-# Test files and output
+# Test files, temporary files, and output
 test.*
 *.pyc
 *.json
 *.npy
 *.jpg
+*.swp
 
 # Output files
 *.nc
