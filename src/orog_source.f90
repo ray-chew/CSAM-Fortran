@@ -88,9 +88,8 @@ program orog_source
     print *, "Entering meaty loop..."
 
     !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !$OMP& PRIVATE(i, clat, clon, mask, coeffs) &
-    !$OMP& FIRSTPRIVATE(topo_obj, llgrid_obj)
-    do i = i, Ncells
+    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
+    do i = 1, Ncells
         print *, "Starting cell: ", i
         clat = lat_center(i)
         clon = lon_center(i)
@@ -102,9 +101,10 @@ program orog_source
         if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
 
             print *, "Skipping ocean cell: ", i
-            !$OMP CRITICAL
+            !OMP CRITICAL
             fcoeffs(:,:,i) = nan
-            !$OMP END CRITICAL
+            !OMP END CRITICAL
+
         else
 
             ! print *, "Setting triangular vertices"
@@ -115,13 +115,11 @@ program orog_source
             call get_coeffs(topo_obj, mask, coeffs)
             ! print *, "Doing linear regression"
             call do_lin_reg(coeffs, topo_obj, mask, .false.)
-            !$OMP CRITICAL
+            !OMP CRITICAL
             fcoeffs(:,:,i) = topo_obj%fcoeffs
-            !$OMP END CRITICAL
+            !OMP END CRITICAL
             print *, "Completed cell: ", i
         end if
-        flush(unit = output_unit)
-        call dealloc_topo_obj(topo_obj)
     end do
     !$OMP END PARALLEL DO
 
