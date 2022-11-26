@@ -205,6 +205,7 @@ contains
         real, dimension(:), allocatable :: tmp_topo
         real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid, lat_nrecs, lon_nrecs
         real, dimension(:,:,:), allocatable :: topo_nrecs
+        real, parameter :: tol = 1.e-5
         
         ! get the outer-most axis of the lat-lon grid
         nlat = size(lat, dim=1)
@@ -221,6 +222,8 @@ contains
         ! we suppose that the allocation of the temporary 2D arrays will not throw an error.
         allocate (tmp_lat(nlat))
         allocate (tmp_lon(nlon))
+        allocate (cond_lat(nlon, nlat))
+        allocate (cond_lon(nlon, nlat))
         allocate (tmp_indices(nlon, nlat))
         allocate (lat_indices(nlat,nrecs))
         allocate (lon_indices(nlon,nrecs))
@@ -229,7 +232,6 @@ contains
 
         lat_indices = .false.
         lon_indices = .false.
-        tmp_indices = .false.
 
         allocate (tmp_indices_3D(nlon, nlat, nrecs), stat=stat)
         tmp_indices_3D = .false.
@@ -260,6 +262,11 @@ contains
             lat_nrecs(:,i) = lat(:,nrec)
             lon_nrecs(:,i) = lon(:,nrec)
             topo_nrecs(:,:,i) = topo(:,:,nrec)
+
+
+            cond_lat = .false.
+            cond_lon = .false.
+            tmp_indices = .false.
 
             ! tmp_indices = (abs(lat_grid - clat) <= width)
             ! tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
@@ -299,15 +306,40 @@ contains
 
         ! this do loop takes care of the corner cases where topography data are in separate nfiles/nrecs but with the same lat or lon underlying grid.
         ! put tolerance into nml flags
-        do i = 1, nrecs-1
-            if (all(abs(lat_nrecs(:,i) - lat_nrecs(:,i+1)) < 1e-5)) then
-                lat_indices(:,i+1) = .false.
-            end if
-            if (all(abs(lon_nrecs(:,i) - lon_nrecs(:,i+1)) < 1e-5)) then
-                lon_indices(:,i+1) = .false.
-            end if
-        end do
+        ! if (nrecs > 2) then
+        !     do i = 1, nrecs-1
+        !         if (all(abs(lat_nrecs(:,i) - lat_nrecs(:,i+1)) < tol)) then
+        !             lat_indices(:,i+1) = .false.
+        !         end if
+        !         if (all(abs(lon_nrecs(:,i) - lon_nrecs(:,i+1)) < tol)) then
+        !             lon_indices(:,i+1) = .false.
+        !         end if
+        !     end do
+        !     if (all(abs(lat_nrecs(:,1) - lat_nrecs(:,nrecs)) < tol)) then
+        !         lat_indices(:,nrecs) = .false.
+        !     end if
+        !     if (all(abs(lon_nrecs(:,1) - lon_nrecs(:,nrecs)) < tol)) then
+        !         lon_indices(:,nrecs) = .false.
+        !     end if
+        ! else if (nrecs == 2 ) then
+        !     if (all(abs(lat_nrecs(:,1) - lat_nrecs(:,nrecs)) < tol)) then
+        !         lat_indices(:,nrecs) = .false.
+        !     end if
+        !     if (all(abs(lon_nrecs(:,1) - lon_nrecs(:,nrecs)) < tol)) then
+        !         lon_indices(:,nrecs) = .false.
+        !     end if
+        ! end if
 
+        if (nrecs > 1) then
+            do i = 1, nrecs-1
+                call check_dupl_arrs(i, nrecs, lat_nrecs, tol, lat_indices)
+                call check_dupl_arrs(i, nrecs, lon_nrecs, tol, lon_indices)
+            end do
+        end if
+
+        ! print *, count(lat_indices)
+        ! print *, count(lon_indices)
+        ! print *, count(tmp_indices_3D)
 
         obj%lat  = pack(lat_nrecs,  lat_indices)
         obj%lon  = pack(lon_nrecs,  lon_indices)
@@ -345,6 +377,33 @@ contains
         deallocate(obj%lon_tri)
         deallocate(obj%topo_tri)
 
-    end subroutine dealloc_topo_obj
+        deallocate(obj%fcoeffs)
+
+    end subroutine dealloc_topo_obj 
+
+
+    subroutine check_dupl_arrs(start, nrecs, arr_nrecs, tol, arr_indices)
+        implicit none
+        integer, intent(in) :: start
+        integer, intent(in) :: nrecs
+        real, dimension(:,:), intent(in) :: arr_nrecs
+        real, intent(in) :: tol
+        logical, dimension(:,:), intent(inout) :: arr_indices
+
+        integer :: i
+
+        do i = start+1, nrecs
+            if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,i)) < tol)) then
+                arr_indices(:,i) = .false.
+            end if
+        end do
+
+        if (start == 1) then
+            if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
+                arr_indices(:,nrecs) = .false.
+            end if           
+        end if
+        
+    end subroutine check_dupl_arrs
 
 end module topo_mod
