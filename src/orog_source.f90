@@ -1,5 +1,5 @@
 program orog_source
-    use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
+    use, intrinsic :: iso_fortran_env, only : output_unit, error_unit, DP => real64
     use, intrinsic :: ieee_arithmetic, only: IEEE_Value, IEEE_QUIET_NAN
     use read_data_mod
     use write_data_mod
@@ -67,7 +67,7 @@ program orog_source
     Ncells = size(lat_center)
     ! Ncells = 1
     ! width = 2.0
-
+    i = 1
 
 
     allocate (fcoeffs(nhar_j,nhar_i,Ncells), stat=stat)
@@ -87,9 +87,11 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
-    do i = 1, Ncells
+    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
+    !$OMP& PRIVATE(i, clat, clon, mask, coeffs) &
+    !$OMP& FIRSTPRIVATE(topo_obj, llgrid_obj)
+    do i = i, Ncells
+        print *, "Starting cell: ", i
         clat = lat_center(i)
         clon = lon_center(i)
         call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj)
@@ -99,8 +101,10 @@ program orog_source
 
         if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
 
+            print *, "Skipping ocean cell: ", i
+            !$OMP CRITICAL
             fcoeffs(:,:,i) = nan
-
+            !$OMP END CRITICAL
         else
 
             ! print *, "Setting triangular vertices"
@@ -111,9 +115,13 @@ program orog_source
             call get_coeffs(topo_obj, mask, coeffs)
             ! print *, "Doing linear regression"
             call do_lin_reg(coeffs, topo_obj, mask, .false.)
+            !$OMP CRITICAL
             fcoeffs(:,:,i) = topo_obj%fcoeffs
-
+            !$OMP END CRITICAL
+            print *, "Completed cell: ", i
         end if
+        flush(unit = output_unit)
+        call dealloc_topo_obj(topo_obj)
     end do
     !$OMP END PARALLEL DO
 
