@@ -88,11 +88,11 @@ program orog_source
     print *, "Entering meaty loop..."
 
     !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj) FIRSTPRIVATE(width)
+    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
     do i = 1, Ncells
         clat = lat_center(i)
         clon = lon_center(i)
-        get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj)
+        call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj)
 
         ! print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i)
