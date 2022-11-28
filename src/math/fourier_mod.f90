@@ -43,8 +43,6 @@ contains
         call ord_sort(JJ_tmp)
         Nj = get_N_unique(JJ_tmp)
 
-        ! N_cos = nhar_i * nhar_j
-        ! N_sin = nhar_i * nhar_j - 1
         N_cos = nhar_i * nhar_j - nhar_j/2
         N_sin = nhar_i * nhar_j - nhar_j/2 - 1
 
@@ -54,14 +52,11 @@ contains
         allocate (c_cos(N_cos))
         allocate (c_sin(N_sin))
 
-        ! print *, "Entering loop..."
-
         do k=1,size(topo_tri)
             l = 1
             m = 1
             n = 1
             do i=0,nhar_i-1
-                ! do j=0,nhar_j-1
                 do j=-nhar_j/2,nhar_j/2-1
                     tmp(l) = 2.0 * PI * (i*II(k)/real(Ni) + j*JJ(k)/real(Nj))
 
@@ -75,14 +70,6 @@ contains
                         m = m + 1
                     end if
 
-
-                    ! if (cos(tmp(l)) == 0) then
-                    !     print *, l, k, i, j
-                    ! end if
-                    ! if (sin(tmp(l)) == 0) then
-                    !     print *, l, k, i, j
-                    ! end if
-
                     l = l + 1
                 end do
             end do
@@ -90,11 +77,6 @@ contains
             coeffs(1:N_cos,k) = c_cos
             coeffs(N_cos+1:N_cos+N_sin,k) = c_sin
 
-            ! do i=1,size(coeffs,dim=1)
-            !     if (coeffs(i,k) == 0) then
-            !         print *, i, k
-            !     end if
-            ! end do
         end do
 
         topo_obj%lat_tri = lat_tri
