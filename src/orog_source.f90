@@ -98,7 +98,7 @@ program orog_source
         ! print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i)
 
-        if ((abs(maxval(topo_obj%topo)) < 1.0) .and. (abs(minval(topo_obj%topo)) < 1.0)) then
+        if ((maxval(topo_obj%topo)) < 1.0) then
 
             print *, "Skipping ocean cell: ", i
             !OMP CRITICAL
@@ -114,7 +114,7 @@ program orog_source
             ! print *, "Getting coefficients"
             call get_coeffs(topo_obj, mask, coeffs)
             ! print *, "Doing linear regression"
-            call do_lin_reg(coeffs, topo_obj, mask, .false.)
+            call do_lin_reg(coeffs, topo_obj, mask, i, .false.)
             !OMP CRITICAL
             fcoeffs(:,:,i) = topo_obj%fcoeffs
             !OMP END CRITICAL

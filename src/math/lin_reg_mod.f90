@@ -12,10 +12,12 @@ module lin_reg_mod
 
 contains
 
-    subroutine do_lin_reg(coeffs, topo_obj, mask, recover_topo)
+    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, recover_topo)
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
+        integer, intent(in) :: ncell
+
         real, dimension(size(coeffs,dim=1)) :: h_hat, sol
         real, dimension(size(coeffs,dim=1),size(coeffs,dim=1)) :: M, Minv
         integer :: nc, nd, istat, nwork
@@ -45,14 +47,14 @@ contains
         call dgetrf(nc,nc,Minv,nc,ipiv,istat)
 
         if (istat /= 0) then
-            write(unit=error_unit, fmt='(A128,I5)') adjustl(trim("Triangulation of matrix unsuccessful! Error code: ")), istat
+            write(unit=error_unit, fmt=*) "Triangulation of matrix unsuccessful for cell: ", ncell, "! Error code: ", istat
             stop LINALG_ERR
         end if
 
         call dgetri(nc,Minv,nc,ipiv,work,nwork,istat)
 
         if (istat /= 0) then
-            write(unit=error_unit, fmt='(A128,I5)') "Inversion of matrix unsuccessful! Error code: ", istat 
+            write(unit=error_unit, fmt=*) "Inversion of matrix unsuccessful for cell: ", ncell, "! Error code: ", istat 
             stop LINALG_ERR
         end if
 
