@@ -1,5 +1,4 @@
 module triangle_mod
-
     implicit none
 
     private
@@ -28,7 +27,7 @@ contains
         real, dimension(:), intent(in) :: lat_vert
         real, dimension(:), intent(in) :: lon_vert
         type(llgrid_t), intent(out) :: llgrid
-        real, intent(in), optional :: pad
+        real, optional, intent(in) :: pad
         real :: pad_
 
         if (present(pad)) then

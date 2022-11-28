@@ -13,13 +13,14 @@ program orog_source
 
     implicit none
     character(len=128) :: fn, fn_linker, fn_topo, fn_output
-    type(flags_t) :: flags
+    type(debug_t) :: debug_flags
+    type(tol_t) :: tol_flags
     real, dimension(:), allocatable :: lat_center, lon_center
     integer, dimension(:,:), allocatable :: link_map
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
-    integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id
+    integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
     real :: clat, clon, nan
     complex, allocatable :: fcoeffs(:,:,:)
 
@@ -32,7 +33,7 @@ program orog_source
     print *, "Reading grid and linker data..."
     call cpu_time(start)
     call get_fn(fn)
-    call get_namelist(fn, fn_linker, fn_topo, fn_output, flags)
+    call get_namelist(fn, fn_linker, fn_topo, fn_output, tol_flags, debug_flags)
 
     call read_data(fn_linker, "clat", lat_center)
     call read_data(fn_linker, "clon", lon_center)
@@ -45,7 +46,7 @@ program orog_source
     call rad_to_deg(lat_vert)
     call rad_to_deg(lon_vert)
 
-    print *, "Reading topo data..."
+    print *, "\nReading topo data...\n"
     call read_data(fn_topo, "lat", topo_lat)
     call read_data(fn_topo, "lon", topo_lon)
     call read_data(fn_topo, "topo", topo_dat)
@@ -69,6 +70,18 @@ program orog_source
     ! width = 2.0
     i = 1
 
+    ! START I/O handling
+    ncid = create_dataset(fn_output)
+    nhi_dim_id = create_dim(ncid, 'nhar_i', nhar_i)
+    nhj_dim_id = create_dim(ncid, 'nhat_j', nhar_j)
+    ncell_dim_id = create_dim(ncid, 'ncell', Ncells)
+
+    ! if (debug_flags%output) then
+        ! ...
+    ! end if
+    call close_dataset(ncid)
+    ! END I/O handling
+
 
     allocate (fcoeffs(nhar_j,nhar_i,Ncells), stat=stat)
     if (stat /= 0) then
@@ -87,16 +100,30 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
+    !OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
+    !OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
     do i = 1, Ncells
         print *, "Starting cell: ", i
         clat = lat_center(i)
         clon = lon_center(i)
-        call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj)
+        call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj, tol_flags%box_padding)
 
         ! print *, "Getting topo..."
-        call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i)
+        call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i, tol_flags%sp_real)
+
+        if (debug_flags%output) then
+
+            !$OMP CRITICAL
+                ncid = open_dataset(fn_output)
+                lat_dim_id = create_dim(ncid, 'lat_' // trim(str(i)), size(topo_obj%lat))
+                lon_dim_id = create_dim(ncid, 'lon_' // trim(str(i)), size(topo_obj%lon))
+                stat = write_data(ncid, 'lat_grid_' // trim(str(i)), topo_obj%lat_grid, (/lon_dim_id,lat_dim_id/))
+                stat = write_data(ncid, 'lon_grid_' // trim(str(i)), topo_obj%lon_grid, (/lon_dim_id,lat_dim_id/))
+                stat = write_data(ncid, 'topo_' // trim(str(i)), topo_obj%topo, (/lon_dim_id,lat_dim_id/))
+                call close_dataset(ncid)
+            !$OMP END CRITICAL
+
+        end if
 
         if ((maxval(topo_obj%topo)) < 1.0) then
 
@@ -105,12 +132,19 @@ program orog_source
             fcoeffs(:,:,i) = nan
             !OMP END CRITICAL
 
+        else if (debug_flags%skip_four) then
+
+            print *, "Skipping fourier computations cell: ", i
+            !OMP CRITICAL
+            fcoeffs(:,:,i) = nan 
+
         else
 
             ! print *, "Setting triangular vertices"
             call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
             ! print *, "Masking points in triangle"
             mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
+
             ! print *, "Getting coefficients"
             call get_coeffs(topo_obj, mask, coeffs)
             ! print *, "Doing linear regression"
@@ -121,7 +155,7 @@ program orog_source
             print *, "Completed cell: ", i
         end if
     end do
-    !$OMP END PARALLEL DO
+    !OMP END PARALLEL DO
 
     call cpu_time(finish)
     wt_finish = omp_get_wtime()
@@ -131,13 +165,9 @@ program orog_source
 
     print *, ""
     print *, "Writing data output..."
-    ncid = create_dataset(fn_output)
-    nhi_dim_id = create_dim(ncid, 'nhar_i', nhar_i)
-    nhj_dim_id = create_dim(ncid, 'nhat_j', nhar_j)
-    ncell_dim_id = create_dim(ncid, 'ncell', Ncells)
 
+    ncid = open_dataset(fn_output)    
     stat = write_data(ncid, 'fcoeffs', fcoeffs, (/nhj_dim_id,nhi_dim_id,ncell_dim_id/))
-
     call close_dataset(ncid)
 
 end program orog_source

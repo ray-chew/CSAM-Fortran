@@ -11,27 +11,34 @@ module utils_mod
     end interface get_fn
 
     private
-    public :: get_fn, get_namelist, rad_to_deg, get_N_unique, flags_t
+    public :: get_fn, get_namelist, rad_to_deg, get_N_unique, tol_t, debug_t, str
 
-    type :: flags_t
-        logical :: debug
-    end type flags_t
+    type :: debug_t
+        logical :: output
+        logical :: skip_four
+    end type debug_t
 
+    type :: tol_t
+        real :: sp_real
+        real :: dp_real
+        real :: box_padding
+    end type tol_t
 contains
 
     ! ref: https://cyber.dabamos.de/programming/modernfortran/namelists.html
-    subroutine get_namelist(fn, fn_grid,fn_topo, fn_output, flags)
+    subroutine get_namelist(fn, fn_grid,fn_topo, fn_output, tol, debug)
         !! Reads Namelist from given file.
         character(len=*),  intent(in)    :: fn
         character(len=*),  intent(out)   :: fn_grid
         character(len=*),  intent(out)   :: fn_topo
         character(len=*),  intent(out)   :: fn_output
-        type(flags_t),     intent(out)   :: flags
+        type(debug_t),     intent(out)   :: debug
+        type(tol_t),       intent(out)   :: tol
         integer                          :: stat
         integer                          :: unit
 
         ! Namelist definition.
-        namelist /USERDATA/ fn_grid, fn_topo, fn_output, flags
+        namelist /USERDATA/ fn_grid, fn_topo, fn_output, tol, debug
 
         ! Check whether file exists.
         inquire (file=fn, iostat=stat)
@@ -114,5 +121,13 @@ contains
             end if
         end do
     end function get_N_unique
+
+    ! ref: https://stackoverflow.com/questions/1262695/convert-integers-to-strings-to-create-output-filenames-at-run-time
+    character(len=20) function str(k)
+    !   "Convert an integer to string."
+        integer, intent(in) :: k
+        write (str, *) k
+        str = adjustl(str)
+    end function str
 
 end module utils_mod
