@@ -77,7 +77,7 @@ contains
 
         integer :: i, j, k
 
-        allocate (z_recon_2D(size(topo_obj%lat),size(topo_obj%lon)))
+        allocate (z_recon_2D(size(topo_obj%lon),size(topo_obj%lat)))
         z_recon_2D = 0.0
 
         k = 1
