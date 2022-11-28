@@ -3,6 +3,12 @@
 
     fn_grid = "/scratch/atmodynamics/chew/data/icon_grid_0012_R02B04_G_linked.nc"
     fn_topo = "/scratch/atmodynamics/chew/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
+    fn_output   = "/scratch/atmodynamics/chew/data/output_6.nc"
 
-    flags%debug = .false.
+    debug%output = .true.       ! do we verbose output result after each substep?
+    debug%skip_four = .true.    ! do we skip the fourier computation substep?
+
+    tol%box_padding = 0.0       ! add padding to box search in degrees lat and lon
+    tol%sp_real = 1e-7          ! what is the tolerance to consider two single-precision floats as ``identical''?
+    tol%dp_real = 1e-15         ! same as sp_real but for double-precision
 !
