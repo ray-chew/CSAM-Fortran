@@ -34,7 +34,7 @@ contains
         if (present(pad)) then
             pad_ = pad
         else
-            pad_ = 1.0
+            pad_ = 4.0
         end if
 
         llgrid%lat_max = maxval(lat_vert) + pad_
