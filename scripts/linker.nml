@@ -1,0 +1,9 @@
+!userdata.nml
+&USERDATA
+
+    fn_grid = "/scratch/atmodynamics/chew/data/icon_grid_0012_R02B04_G.nc"
+    fn_topo = "/scratch/atmodynamics/chew/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
+    fn_output   = "/scratch/atmodynamics/chew/data/output.nc"
+
+    flags%debug = .false.
+!

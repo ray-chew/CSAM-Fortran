@@ -1,9 +1,13 @@
 !userdata.nml
 &USERDATA
 
-    fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked_6.nc"
-    fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact_6.nc"
-    fn_output   = "/home/ray/git-projects/trifourtopo/data/output_6.nc"
+    ! fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked.nc"
+    ! fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact.nc"
+    ! fn_output   = "/home/ray/git-projects/trifourtopo/data/output.nc"
+
+    fn_grid     = "/scratch/atmodynamics/chew/data/icon_compact_linked.nc"
+    fn_topo     = "/scratch/atmodynamics/chew/data/topo_compact.nc"
+    fn_output   = "/scratch/atmodynamics/chew/data/output.nc"
 
     debug%output = .true.       ! do we verbose output result after each substep?
     debug%skip_four = .true.    ! do we skip the fourier computation substep?

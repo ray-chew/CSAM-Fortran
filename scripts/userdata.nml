@@ -3,7 +3,7 @@
 
     fn_grid = "/scratch/atmodynamics/chew/data/icon_grid_0012_R02B04_G_linked.nc"
     fn_topo = "/scratch/atmodynamics/chew/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
-    fn_output   = "/scratch/atmodynamics/chew/data/output_6.nc"
+    fn_output   = "/scratch/atmodynamics/chew/data/output.nc"
 
     debug%output = .true.       ! do we verbose output result after each substep?
     debug%skip_four = .true.    ! do we skip the fourier computation substep?
