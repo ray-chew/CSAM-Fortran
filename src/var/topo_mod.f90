@@ -184,7 +184,7 @@ contains
     end subroutine get_topo_by_search
 
 
-    subroutine get_topo_by_index(lat, lon, clat, clon, llgrid, topo, obj, link_map, ncell)
+    subroutine get_topo_by_index(lat, lon, clat, clon, llgrid, topo, obj, link_map, ncell, tol)
         implicit none
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon
@@ -203,9 +203,15 @@ contains
         ! logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         logical, dimension(:,:), allocatable :: lat_indices, lon_indices
         real, dimension(:), allocatable :: tmp_topo
-        real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid, lat_nrecs, lon_nrecs
+        real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid, lat_nrecs, lon_nrecs, tmp_topo_grid
         real, dimension(:,:,:), allocatable :: topo_nrecs
-        real, parameter :: tol = 1.e-5
+        real, optional, intent(in) :: tol
+        real :: tol_
+        if (present(tol)) then
+            tol_ = tol
+        else
+            tol_ = 1e-5
+        end if
         
         ! get the outer-most axis of the lat-lon grid
         nlat = size(lat, dim=1)
@@ -261,8 +267,10 @@ contains
 
             lat_nrecs(:,i) = lat(:,nrec)
             lon_nrecs(:,i) = lon(:,nrec)
-            topo_nrecs(:,:,i) = topo(:,:,nrec)
-
+            tmp_topo_grid = topo(:,:,nrec)
+            tmp_topo_grid = tmp_topo_grid(:,ubound(tmp_topo_grid,dim=2):lbound(tmp_topo_grid,dim=2):-1)
+            topo_nrecs(:,:,i) = tmp_topo_grid !topo(:,:,nrec)
+            ! topo_nrecs(:,:,i) = topo(:,:,nrec)
 
             cond_lat = .false.
             cond_lon = .false.
@@ -292,7 +300,7 @@ contains
             ! print *, "count(tmp_lon) = ", count(tmp_lon)
 
             ! Why do we need to flip the latitude axis?
-            tmp_indices_3D(:,:,i) = tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
+            tmp_indices_3D(:,:,i) = tmp_indices !tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
         end do
 
         ! print *, "nloop done"
@@ -352,7 +360,7 @@ contains
         tmp_topo = pack(topo_nrecs, tmp_indices_3D)
         
         obj%topo = reshape(tmp_topo, shape=(/size(obj%lon),size(obj%lat)/), order=(/1,2/))
-        obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
+        ! obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
 
         if ((size(obj%lat) * size(obj%lon)) /= size(obj%topo)) then
             write(unit=error_unit, fmt='(A)') "Error: Gathered subpoints shapes do not match."
@@ -394,11 +402,11 @@ contains
 
         do i = start+1, nrecs
             if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,i)) < tol)) then
-                arr_indices(:,i) = .false.
+                arr_indices(:,start) = .false.
             end if
         end do
 
-        if (start == 1) then
+        if ((start == 1) .and. (nrecs > 2)) then
             if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
                 arr_indices(:,nrecs) = .false.
             end if           
