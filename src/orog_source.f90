@@ -100,8 +100,10 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
+    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map,       &
+    !$OMP& fcoeffs, fn_output)          &
+    !$OMP& DEFAULT(PRIVATE)             &
+    !$OMP& FIRSTPRIVATE(tol_flags, debug_flags)
     do i = 1, Ncells
         ! print *, "Starting cell: ", i
         clat = lat_center(i)
@@ -111,9 +113,8 @@ program orog_source
         ! print *, "Getting topo..."
         call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i, tol_flags%sp_real)
 
+        !$OMP CRITICAL
         if (debug_flags%output) then
-
-            !$OMP CRITICAL
                 ncid = open_dataset(fn_output)
                 lat_dim_id = create_dim(ncid, 'lat_' // trim(str(i)), size(topo_obj%lat))
                 lon_dim_id = create_dim(ncid, 'lon_' // trim(str(i)), size(topo_obj%lon))
@@ -121,9 +122,8 @@ program orog_source
                 stat = write_data(ncid, 'lon_grid_' // trim(str(i)), topo_obj%lon_grid, (/lon_dim_id,lat_dim_id/))
                 stat = write_data(ncid, 'topo_' // trim(str(i)), topo_obj%topo, (/lon_dim_id,lat_dim_id/))
                 call close_dataset(ncid)
-            !$OMP END CRITICAL
-
         end if
+        !$OMP END CRITICAL
 
         if ((maxval(topo_obj%topo)) < 1.0) then
 
@@ -148,11 +148,22 @@ program orog_source
             ! print *, "Getting coefficients"
             call get_coeffs(topo_obj, mask, coeffs)
             ! print *, "Doing linear regression"
-            call do_lin_reg(coeffs, topo_obj, mask, i, .false.)
+            call do_lin_reg(coeffs, topo_obj, mask, i, debug_flags%recover_topo)
             !OMP CRITICAL
             fcoeffs(:,:,i) = topo_obj%fcoeffs
             !OMP END CRITICAL
+
             print *, "Completed cell: ", i
+
+            !$OMP CRITICAL
+            if ((debug_flags%output) .and. (debug_flags%recover_topo)) then
+                ncid = open_dataset(fn_output)
+                stat = write_data(ncid, 'topo_recon_' // trim(str(i)), topo_obj%topo_recon_2D, (/lon_dim_id,lat_dim_id/))
+                stat = write_data(ncid, 'mask_' // trim(str(i)), bool2int(mask), (/lon_dim_id,lat_dim_id/))
+                call close_dataset(ncid)
+            end if
+            !$OMP END CRITICAL
+
         end if
     end do
     !$OMP END PARALLEL DO
