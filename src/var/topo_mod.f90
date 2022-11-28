@@ -270,8 +270,8 @@ contains
 
             ! tmp_indices = (abs(lat_grid - clat) <= width)
             ! tmp_indices = tmp_indices .and. (abs(lon_grid - clon) <= width)
-            cond_lat = ((llgrid%lat_min < lat_grid) .and. (lat_grid < llgrid%lat_max))
-            cond_lon = ((llgrid%lon_min < lon_grid) .and. (lon_grid < llgrid%lon_max))
+            cond_lat = ((llgrid%lat_min <= lat_grid) .and. (lat_grid <= llgrid%lat_max))
+            cond_lon = ((llgrid%lon_min <= lon_grid) .and. (lon_grid <= llgrid%lon_max))
             tmp_indices = cond_lat .and. cond_lon
             ! print *, count(tmp_indices)
             
