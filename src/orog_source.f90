@@ -27,6 +27,7 @@ program orog_source
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
     logical, dimension(:,:), allocatable :: mask
+    integer, parameter :: chunk=200
 
     nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
 
@@ -104,6 +105,7 @@ program orog_source
     !$OMP& fcoeffs, fn_output)          &
     !$OMP& DEFAULT(PRIVATE)             &
     !$OMP& FIRSTPRIVATE(tol_flags, debug_flags)
+    !$OMP& SCHEDULE(DYNAMIC, chunk)
     do i = 1, Ncells
         ! print *, "Starting cell: ", i
         clat = lat_center(i)
