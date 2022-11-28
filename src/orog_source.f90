@@ -100,10 +100,10 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
-    !OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
+    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map, fcoeffs) & 
+    !$OMP& PRIVATE(i, clat, clon, mask, coeffs, topo_obj, llgrid_obj)
     do i = 1, Ncells
-        print *, "Starting cell: ", i
+        ! print *, "Starting cell: ", i
         clat = lat_center(i)
         clon = lon_center(i)
         call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj, tol_flags%box_padding)
@@ -155,7 +155,7 @@ program orog_source
             print *, "Completed cell: ", i
         end if
     end do
-    !OMP END PARALLEL DO
+    !$OMP END PARALLEL DO
 
     call cpu_time(finish)
     wt_finish = omp_get_wtime()

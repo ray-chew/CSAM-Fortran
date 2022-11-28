@@ -5,10 +5,10 @@
     fn_topo = "/scratch/atmodynamics/chew/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
     fn_output   = "/scratch/atmodynamics/chew/data/output.nc"
 
-    debug%output = .true.       ! do we verbose output result after each substep?
-    debug%skip_four = .true.    ! do we skip the fourier computation substep?
+    debug%output = .false.       ! do we verbose output result after each substep?
+    debug%skip_four = .false.    ! do we skip the fourier computation substep?
 
-    tol%box_padding = 0.0       ! add padding to box search in degrees lat and lon
+    tol%box_padding = 2.0       ! add padding to box search in degrees lat and lon
     tol%sp_real = 1e-7          ! what is the tolerance to consider two single-precision floats as ``identical''?
     tol%dp_real = 1e-15         ! same as sp_real but for double-precision
 !
