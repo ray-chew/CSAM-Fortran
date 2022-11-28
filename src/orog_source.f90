@@ -27,7 +27,7 @@ program orog_source
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
     logical, dimension(:,:), allocatable :: mask
-    integer, parameter :: chunk=200
+    integer, parameter :: chunk=100
 
     nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
 
@@ -47,7 +47,8 @@ program orog_source
     call rad_to_deg(lat_vert)
     call rad_to_deg(lon_vert)
 
-    print *, "\nReading topo data...\n"
+    print *, ""
+    print *, "Reading topo data..."
     call read_data(fn_topo, "lat", topo_lat)
     call read_data(fn_topo, "lon", topo_lon)
     call read_data(fn_topo, "topo", topo_dat)
