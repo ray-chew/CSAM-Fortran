@@ -10,12 +10,12 @@ module utils_mod
         module procedure get_grid_fn
     end interface get_fn
 
-    private
-    public :: get_fn, get_namelist, rad_to_deg, get_N_unique, tol_t, debug_t, str
+    public
 
     type :: debug_t
         logical :: output
         logical :: skip_four
+        logical :: recover_topo
     end type debug_t
 
     type :: tol_t
@@ -129,5 +129,18 @@ contains
         write (str, *) k
         str = adjustl(str)
     end function str
+
+
+    elemental function bool2int(bool_arr) result(int_arr)
+        implicit none
+        logical, intent(in) :: bool_arr
+        integer :: int_arr
+
+        int_arr = 0
+        if (bool_arr .eqv. .true.) then
+            int_arr = 1
+        end if
+
+    end function bool2int
 
 end module utils_mod
