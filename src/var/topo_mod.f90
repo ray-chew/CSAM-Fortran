@@ -400,15 +400,15 @@ contains
 
         integer :: i
 
-        do i = start+1, nrecs
-            if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,i)) < tol)) then
-                arr_indices(:,start) = .false.
+        do i = start, nrecs-1
+            if (all(abs(arr_nrecs(:,nrecs) - arr_nrecs(:,nrecs-i)) < tol)) then
+                arr_indices(:,nrecs-i) = .false.
             end if
         end do
 
         if ((start == 1) .and. (nrecs > 2)) then
             if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
-                arr_indices(:,nrecs) = .false.
+                arr_indices(:,start) = .false.
             end if           
         end if
         
