@@ -7,9 +7,14 @@
 
     debug%output = .false.       ! do we verbose output result after each substep?
     debug%skip_four = .false.    ! do we skip the fourier computation substep?
-    debug%recover_topo = .true.  ! do we recover the topography? 
+    debug%recover_topo = .false. ! do we recover the topography? 
+    debug%verbose = .false.      ! do we do verbose printing of progress?
 
     tol%box_padding = 2.0       ! add padding to box search in degrees lat and lon
     tol%sp_real = 1e-7          ! what is the tolerance to consider two single-precision floats as ``identical''?
     tol%dp_real = 1e-15         ! same as sp_real but for double-precision
+
+    run%full_spectrum = .false. ! do we compute with the full power spectrum?
+    run%rotation = 0            ! 0 = none; 1 = search; 2 = pca; 3 = optimal
+    run%fn_optimal = ""         ! 
 !
