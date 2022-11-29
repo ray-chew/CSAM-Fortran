@@ -281,13 +281,12 @@ contains
         integer :: sep_sz, dense_sz, nhj_0, i, j, k, l
         ! real, dimension(:), allocatable :: c_cos, c_sin, c_cos_k, c_sin_k, c_cos_l, c_sin_l
 
-
+        dense_sz = nhar_i * nhar_j
         allocate (recov_coeffs(dense_sz))
         recov_coeffs = cmplx(0.0)
 
         if (full_spectrum) then
             sep_sz = nhar_i * nhar_j - (nhar_j/2 + 1)
-            dense_sz = nhar_i * nhar_j
 
             ! recov_coeffs(1:nhar_j/2) = cmplx(0.0)
             recov_coeffs(nhar_j/2+1) = cmplx(sol(1))
