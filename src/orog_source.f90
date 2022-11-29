@@ -6,7 +6,7 @@ program orog_source
     use utils_mod
     use triangle_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : get_coeffs, get_axial_coeffs, nhar_i, nhar_j
+    use fourier_mod, only : get_coeffs, get_axial_coeffs, get_full_coeffs, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
     use omp_lib
@@ -15,12 +15,13 @@ program orog_source
     character(len=128) :: fn, fn_linker, fn_topo, fn_output
     type(debug_t) :: debug_flags
     type(tol_t) :: tol_flags
-    real, dimension(:), allocatable :: lat_center, lon_center
+    type(run_t) :: run_flags
+    real, dimension(:), allocatable :: lat_center, lon_center, alphas
     integer, dimension(:,:), allocatable :: link_map
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
-    integer :: i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
+    integer :: i, j, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
     real :: clat, clon, nan, alpha
     complex, allocatable :: fcoeffs(:,:,:)
 
@@ -34,7 +35,7 @@ program orog_source
     print *, "Reading grid and linker data..."
     call cpu_time(start)
     call get_fn(fn)
-    call get_namelist(fn, fn_linker, fn_topo, fn_output, tol_flags, debug_flags)
+    call get_namelist(fn, fn_linker, fn_topo, fn_output, tol_flags, debug_flags, run_flags)
 
     call read_data(fn_linker, "clat", lat_center)
     call read_data(fn_linker, "clon", lon_center)
@@ -62,7 +63,6 @@ program orog_source
 
 
     Ncells = size(lat_center)
-    alpha = 0.0
 
     ! START I/O handling
     ncid = create_dataset(fn_output)
@@ -97,15 +97,17 @@ program orog_source
     !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
     !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
     !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output)          &
-    !$OMP& FIRSTPRIVATE(tol_flags, debug_flags) &
-    !$OMP& SCHEDULE(DYNAMIC, chunk)
+    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags) &
+    !$OMP& SCHEDULE(DYNAMIC)
     do i = 1, Ncells
-        ! print *, "Starting cell: ", i
+        if (debug_flags%verbose) print *, "Starting cell: ", i
+
         clat = lat_center(i)
         clon = lon_center(i)
         call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj, tol_flags%box_padding)
 
-        ! print *, "Getting topo..."
+        if (debug_flags%verbose) print *, "Getting topo..."
+
         call get_topo(topo_lat, topo_lon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i, tol_flags%sp_real)
 
         !$OMP CRITICAL
@@ -122,32 +124,51 @@ program orog_source
 
         if ((maxval(topo_obj%topo)) < 1.0) then
 
-            print *, "Skipping ocean cell: ", i
-            !OMP CRITICAL
-            fcoeffs(:,:,i) = nan
-            !OMP END CRITICAL
+            ! print *, "Skipping ocean cell: ", i
+            ! fcoeffs(:,:,i) = nan
+            print *, "Below sea level cell: ", i
 
         else if (debug_flags%skip_four) then
 
             print *, "Skipping fourier computations for cell: ", i
-            !OMP CRITICAL
             fcoeffs(:,:,i) = nan 
 
         else
 
-            ! print *, "Setting triangular vertices"
+            if (debug_flags%verbose) print *, "Setting triangular vertices"
             call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
-            ! print *, "Masking points in triangle"
+
+            if (debug_flags%verbose) print *, "Masking points in triangle"
             mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
 
-            ! print *, "Getting coefficients"
+            if (debug_flags%verbose) print *, "Getting coefficients"
             ! call get_coeffs(topo_obj, mask, coeffs)
-            call get_axial_coeffs(topo_obj, mask, alpha, coeffs)
-            ! print *, "Doing linear regression"
-            call do_lin_reg(coeffs, topo_obj, mask, i, debug_flags%recover_topo)
-            !OMP CRITICAL
+            if (run_flags%full_spectrum) then
+                call get_full_coeffs(topo_obj, mask, coeffs)
+            else
+                ! handle how to rotate axial wavenumbers
+                if (run_flags%rotation == 0) then
+                    alphas = (/0.0/)
+                else if (run_flags%rotation == 1) then
+                    alphas = (/(j, j=0, 90, 1)/)
+                else if (run_flags%rotation == 2) then
+                    ! alphas = get_pca_angle()
+                    alphas = (/0.0/)
+                    print *, "Method not implemented"
+                else if (run_flags%rotation == 3) then
+                    alphas = (/0.0/)
+                    print *, "Method not implemented"
+                end if
+                do j = 1, size(alphas)
+                    alpha = alphas(j)
+                    call get_axial_coeffs(topo_obj, mask, alpha, coeffs)
+                end do
+                
+            end if
+
+            if (debug_flags%verbose) print *, "Doing linear regression"
+            call do_lin_reg(coeffs, topo_obj, mask, i, run_flags%full_spectrum, debug_flags%recover_topo)
             fcoeffs(:,:,i) = topo_obj%fcoeffs
-            !OMP END CRITICAL
 
             print *, "Completed cell: ", i
 
@@ -173,7 +194,7 @@ program orog_source
     print *, ""
     print *, "Writing data output..."
 
-    ncid = open_dataset(fn_output)    
+    ncid = open_dataset(fn_output)
     stat = write_data(ncid, 'fcoeffs', fcoeffs, (/nhj_dim_id,nhi_dim_id,ncell_dim_id/))
     call close_dataset(ncid)
 

@@ -12,7 +12,7 @@ module lin_reg_mod
 
 contains
 
-    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, recover_topo)
+    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, full, recover_topo)
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
@@ -26,7 +26,8 @@ contains
         real, dimension(size(coeffs,dim=2)) :: z_recon
 
         logical, intent(in) :: mask(:,:)
-        logical, intent(in), optional :: recover_topo
+        logical, intent(in) :: recover_topo
+        logical, intent(in) :: full
         ! if (.not. present(recover_topo)) then
         !     recover_topo = .false.
         ! end if 
