@@ -7,7 +7,7 @@ module fourier_mod
 
     private
 
-    public :: get_coeffs, get_axial_coeffs, recover_coeffs, nhar_i, nhar_j
+    public :: get_coeffs, get_axial_coeffs, get_full_coeffs, recover_coeffs, nhar_i, nhar_j
 
     integer, parameter ::   nhar_i = 12, &
                             nhar_j = 12
@@ -98,14 +98,64 @@ contains
     end subroutine get_coeffs
 
 
-    subroutine get_axial_coeffs(topo_obj, mask, alpha, coeffs)
+    subroutine get_full_coeffs(topo_obj, mask, coeffs)
         implicit none
         type(topo_t), intent(inout) :: topo_obj
-        real, intent(inout) :: alpha
+        real, dimension(:,:), allocatable, intent(out) :: coeffs
+        logical, dimension(:,:), intent(in) :: mask
+        real, dimension(:,:), allocatable :: c_cos, c_sin, terms_sum
+        real, dimension(:,:,:), allocatable :: tmp_i, tmp_j
+
+        type(ftmp_t) :: f_obj
+        integer :: ncells, dense_sz, nhj_0
+
+        call get_IJ(mask, f_obj, topo_obj)
+        call f_obj%prepare_terms()
+
+        ! Note, I am storing terms_i and terms_j as row major here...
+        f_obj%terms_i = spread(real(f_obj%m_i), dim=1, ncopies=size(f_obj%II)) * & 
+        spread(real(f_obj%II), dim=2, ncopies=size(f_obj%m_i)) / real(f_obj%Ni)
+        f_obj%terms_j = spread(real(f_obj%m_j), dim=1, ncopies=size(f_obj%JJ)) * &
+        spread(real(f_obj%JJ), dim=2, ncopies=size(f_obj%m_j)) / real(f_obj%Nj)
+
+        ncells = size(f_obj%terms_i, dim=1)
+        dense_sz = size(f_obj%terms_i, dim=2) * size(f_obj%terms_j, dim=2)
+
+        f_obj%terms_i = reshape(spread(f_obj%terms_i, dim=2, ncopies=size(f_obj%terms_j, dim=2)), &
+        (/ncells, dense_sz/), order=(/1,2/))
+        f_obj%terms_j = reshape(spread(f_obj%terms_j, dim=3, ncopies=size(f_obj%terms_i, dim=2)), &
+        (/ncells, dense_sz/), order=(/1,2/))
+
+        ! tmp_i = spread(f_obj%terms_i, dim=2, ncopies=size(f_obj%terms_j, dim=2))
+        ! tmp_j = spread(f_obj%terms_j, dim=3, ncopies=size(f_obj%terms_i, dim=2))
+
+        ! f_obj%terms_i = reshape(tmp_i, (/ncells, dense_sz/), order=(/1,2/))
+        ! f_obj%terms_j = reshape(tmp_j, (/ncells, dense_sz/), order=(/1,2/))
+
+        nhj_0 = nhar_j / 2 + 1 ! index position of the zeroth j-wavenumber
+        terms_sum = f_obj%terms_i + f_obj%terms_j
+
+        c_cos = cos(2.0 * PI * terms_sum(:,nhj_0:dense_sz))
+        c_sin = sin(2.0 * PI * terms_sum(:,nhj_0+1:dense_sz))
+
+        ! here, we do a transpose of coeffs to return a column-major result.
+        allocate (coeffs(size(c_cos, dim=2) + size(c_sin, dim=2), ncells))
+
+        coeffs(1 : size(c_cos, dim=2),:) = transpose(c_cos)
+        coeffs(size(c_cos, dim=2)+1 : size(c_cos, dim=2) + size(c_sin, dim=2), :) = transpose(c_sin)
+
+    end subroutine get_full_coeffs
+
+
+    subroutine get_axial_coeffs(topo_obj, mask, deg_alpha, coeffs)
+        implicit none
+        type(topo_t), intent(inout) :: topo_obj
+        real, intent(inout) :: deg_alpha
         real, dimension(:,:), allocatable, intent(out) :: coeffs
         logical, dimension(:,:), intent(in) :: mask
         real, dimension(:), allocatable :: ktil, ltil, khat, lhat
         real, dimension(:,:), allocatable :: c_cos, c_sin
+        real :: alpha
         ! real, dimension(:,:), allocatable :: tmp
 
         type(ftmp_t) :: f_obj
@@ -114,9 +164,9 @@ contains
         ! do rotation of topo here...
 
         call get_IJ(mask, f_obj, topo_obj)
-        call f_obj%prepare_terms(.false.)
+        call f_obj%prepare_terms()
 
-        call deg_to_rad(alpha)
+        alpha = deg_to_rad(deg_alpha)
 
         ! Note that I am initialising the arrays as row-majors here.
         ktil = real(f_obj%m_i) * cos(alpha)
@@ -187,11 +237,11 @@ contains
     end subroutine get_IJ
 
 
-    subroutine prepare_terms(self, compute_terms)
+    subroutine prepare_terms(self)
         implicit none
         ! type(topo_t), intent(inout) :: topo_obj
         class(ftmp_t), intent(inout) :: self
-        logical, intent(in) :: compute_terms
+        ! logical, intent(in) :: compute_terms
         ! integer, dimension(count(mask)), intent(out) :: II, JJ
         integer, dimension(size(self%JJ)) :: JJ_tmp
         integer :: i
@@ -209,13 +259,8 @@ contains
             self%m_j = (/(i, i=-(nhar_j-1)/2, nhar_j/2-1, 1)/)
         end if
 
-        if (compute_terms) then
-        ! Note, I am storing terms_i and terms_j as row major here...
-            self%terms_i = spread(self%m_i, dim=1, ncopies=size(self%II)) * & 
-            spread(self%II, dim=2, ncopies=size(self%m_i)) / self%Ni
-            self%terms_j = spread(self%m_j, dim=1, ncopies=size(self%JJ)) * &
-            spread(self%JJ, dim=2, ncopies=size(self%m_j)) / self%Nj
-        end if
+        ! if (compute_terms) then
+        ! end if
         
     end subroutine prepare_terms
 
