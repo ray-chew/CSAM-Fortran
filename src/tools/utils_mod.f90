@@ -99,9 +99,18 @@ contains
         implicit none
         real, intent(inout) :: value
 
-        value = value * (180.0 / PI)
+        value = value * 180.0 / PI
         
     end subroutine rad_to_deg
+
+
+    elemental subroutine deg_to_rad(value)
+        implicit none
+        real, intent(inout) :: value
+
+        value = value / 180.0 * PI
+        
+    end subroutine deg_to_rad
 
 
     function get_N_unique(arr) result(cnt)
@@ -142,5 +151,8 @@ contains
         end if
 
     end function bool2int
+
+
+
 
 end module utils_mod
