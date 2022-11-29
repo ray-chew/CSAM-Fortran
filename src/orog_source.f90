@@ -6,7 +6,7 @@ program orog_source
     use utils_mod
     use triangle_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : get_coeffs, nhar_i, nhar_j
+    use fourier_mod, only : get_coeffs, get_axial_coeffs, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
     use omp_lib
@@ -21,7 +21,7 @@ program orog_source
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
     integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
-    real :: clat, clon, nan
+    real :: clat, clon, nan, alpha
     complex, allocatable :: fcoeffs(:,:,:)
 
     type(topo_t) :: topo_obj
@@ -60,17 +60,9 @@ program orog_source
     call cpu_time(finish)
     print '("Read time = ",f6.3," seconds.")',finish-start
 
-    ! Snippet of code for tests...topo_obj
-    ref_idx = 1000
-
-    clat = lat_center(ref_idx)
-    clon = lon_center(ref_idx)
-    ! End Snippet
 
     Ncells = size(lat_center)
-    ! Ncells = 1
-    ! width = 2.0
-    i = 1
+    alpha = 0.0
 
     ! START I/O handling
     ncid = create_dataset(fn_output)
@@ -102,9 +94,10 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !$OMP  PARALLEL DO SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center, lat_vert, lon_vert, link_map,       &
-    !$OMP& fcoeffs, fn_output)          &
-    !$OMP& DEFAULT(PRIVATE)             &
+    !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
+    !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
+    !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output)          &
+    !$OMP&              &
     !$OMP& FIRSTPRIVATE(tol_flags, debug_flags)
     !$OMP& SCHEDULE(DYNAMIC, chunk)
     do i = 1, Ncells
@@ -137,7 +130,7 @@ program orog_source
 
         else if (debug_flags%skip_four) then
 
-            print *, "Skipping fourier computations cell: ", i
+            print *, "Skipping fourier computations for cell: ", i
             !OMP CRITICAL
             fcoeffs(:,:,i) = nan 
 
@@ -149,7 +142,8 @@ program orog_source
             mask = points_in_triangle(topo_obj%lat_grid,topo_obj%lon_grid, llgrid_obj)
 
             ! print *, "Getting coefficients"
-            call get_coeffs(topo_obj, mask, coeffs)
+            ! call get_coeffs(topo_obj, mask, coeffs)
+            call get_axial_coeffs(topo_obj, mask, alpha, coeffs)
             ! print *, "Doing linear regression"
             call do_lin_reg(coeffs, topo_obj, mask, i, debug_flags%recover_topo)
             !OMP CRITICAL
