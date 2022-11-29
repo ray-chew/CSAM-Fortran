@@ -163,8 +163,6 @@ contains
 
         r_varname = trim(re_) // trim(varname)
         i_varname = trim(im_) // trim(varname)
-        ! r_varname = "real"
-        ! i_varname = "imag"
 
         re_id = write_3D(ncid, trim(r_varname), r_arr, dimids)
         call write_attrs(ncid, re_id, 'long_name', 're(fcoeffs)')
