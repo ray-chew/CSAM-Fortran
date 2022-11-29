@@ -335,9 +335,9 @@ contains
         ! end if
 
         if (nrecs > 1) then
-            do i = 1, nrecs-1
-                call check_dupl_arrs(i, nrecs, lat_nrecs, tol, lat_indices)
-                call check_dupl_arrs(i, nrecs, lon_nrecs, tol, lon_indices)
+            do i = 0, nrecs-2
+                call check_dupl_arrs(nrecs-i, lat_nrecs, tol, lat_indices)
+                call check_dupl_arrs(nrecs-i, lon_nrecs, tol, lon_indices)
             end do
         end if
 
@@ -386,27 +386,27 @@ contains
     end subroutine dealloc_topo_obj 
 
 
-    subroutine check_dupl_arrs(start, nrecs, arr_nrecs, tol, arr_indices)
+    subroutine check_dupl_arrs(end, arr_nrecs, tol, arr_indices)
         implicit none
-        integer, intent(in) :: start
-        integer, intent(in) :: nrecs
+        integer, intent(in) :: end
+        ! integer, intent(in) :: nrecs
         real, dimension(:,:), intent(in) :: arr_nrecs
         real, intent(in) :: tol
         logical, dimension(:,:), intent(inout) :: arr_indices
 
         integer :: i
 
-        do i = start, nrecs-1
-            if (all(abs(arr_nrecs(:,nrecs) - arr_nrecs(:,nrecs-i)) < tol)) then
-                arr_indices(:,nrecs-i) = .false.
+        do i = 1, end-1
+            if (all(abs(arr_nrecs(:,end) - arr_nrecs(:,end-i)) < tol)) then
+                arr_indices(:,end-i) = .false.
             end if
         end do
 
-        if ((start == 1) .and. (nrecs > 2)) then
-            if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
-                arr_indices(:,start) = .false.
-            end if           
-        end if
+        ! if ((start == 1) .and. (nrecs > 2)) then
+        !     if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
+        !         arr_indices(:,start) = .false.
+        !     end if           
+        ! end if
         
     end subroutine check_dupl_arrs
 
