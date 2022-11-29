@@ -20,7 +20,7 @@ program orog_source
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
-    integer :: ref_idx, i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
+    integer :: i, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
     real :: clat, clon, nan, alpha
     complex, allocatable :: fcoeffs(:,:,:)
 
@@ -97,8 +97,7 @@ program orog_source
     !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
     !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
     !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output)          &
-    !$OMP&              &
-    !$OMP& FIRSTPRIVATE(tol_flags, debug_flags)
+    !$OMP& FIRSTPRIVATE(tol_flags, debug_flags) &
     !$OMP& SCHEDULE(DYNAMIC, chunk)
     do i = 1, Ncells
         ! print *, "Starting cell: ", i
@@ -107,7 +106,7 @@ program orog_source
         call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid_obj, tol_flags%box_padding)
 
         ! print *, "Getting topo..."
-        call get_topo(topo_lat, topo_lon, clat, clon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i, tol_flags%sp_real)
+        call get_topo(topo_lat, topo_lon, llgrid_obj, topo_dat, topo_obj, link_map(:,i), i, tol_flags%sp_real)
 
         !$OMP CRITICAL
         if (debug_flags%output) then

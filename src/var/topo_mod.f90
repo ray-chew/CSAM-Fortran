@@ -24,19 +24,17 @@ module topo_mod
 
 contains
 
-    subroutine get_topo_idx(lat, lon, clat, clon, llgrid, ncell, icon_topo_links)
+    subroutine get_topo_idx(lat, lon, llgrid, ncell, icon_topo_links)
         implicit none
         real, dimension(:,:), intent(in) :: lat
         real, dimension(:,:), intent(in) :: lon
-        real, intent(in) :: clat
-        real, intent(in) :: clon
         ! real, intent(inout) :: width
         type(llgrid_t), intent(out) :: llgrid
         integer, intent(in) :: ncell
         integer, dimension(:,:), intent(out) :: icon_topo_links
 
         integer :: nrecs, nlat, nlon
-        integer :: i, j, stat
+        integer :: i, j
         logical, dimension(:,:), allocatable :: tmp_indices, cond_lat, cond_lon
         logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         real, dimension(:,:), allocatable :: lat_grid, lon_grid
@@ -84,11 +82,10 @@ contains
 
     end subroutine get_topo_idx
 
-    subroutine get_topo_by_search(lat, lon, clat, clon, llgrid, topo, obj)
+    subroutine get_topo_by_search(lat, lon, llgrid, topo, obj)
         implicit none
         type(topo_t), intent(out) :: obj
-        real, dimension(:,:), intent(in) :: lat, lon      
-        real, intent(in) :: clat, clon
+        real, dimension(:,:), intent(in) :: lat, lon
         real(kind=DP), dimension(:,:,:), intent(inout) :: topo
         type(llgrid_t), intent(out) :: llgrid
 
@@ -99,7 +96,7 @@ contains
         logical, dimension(:,:,:), allocatable :: tmp_indices_3D
         logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         real, dimension(:), allocatable :: tmp_topo
-        real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid
+        real, dimension(:,:), allocatable :: lat_grid, lon_grid
 
         ! get the outer-most axis of the lat-lon grid
         nlat = size(lat, dim=1)
@@ -184,11 +181,10 @@ contains
     end subroutine get_topo_by_search
 
 
-    subroutine get_topo_by_index(lat, lon, clat, clon, llgrid, topo, obj, link_map, ncell, tol)
+    subroutine get_topo_by_index(lat, lon, llgrid, topo, obj, link_map, ncell, tol)
         implicit none
         type(topo_t), intent(out) :: obj
         real, dimension(:,:), intent(in) :: lat, lon
-        real, intent(in) :: clat, clon
         real(kind=DP), dimension(:,:,:), intent(in) :: topo
         integer, dimension(:), intent(in) :: link_map
         integer, intent(in) :: ncell
@@ -203,7 +199,7 @@ contains
         ! logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         logical, dimension(:,:), allocatable :: lat_indices, lon_indices
         real, dimension(:), allocatable :: tmp_topo
-        real, dimension(:,:), allocatable :: lat_grid, lon_grid, topo_grid, lat_nrecs, lon_nrecs, tmp_topo_grid
+        real, dimension(:,:), allocatable :: lat_grid, lon_grid, lat_nrecs, lon_nrecs, tmp_topo_grid
         real, dimension(:,:,:), allocatable :: topo_nrecs
         real, optional, intent(in) :: tol
         real :: tol_
