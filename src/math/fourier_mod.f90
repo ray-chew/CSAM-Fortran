@@ -7,10 +7,15 @@ module fourier_mod
 
     private
 
-    public :: get_coeffs, get_axial_coeffs, get_full_coeffs, recover_coeffs, nhar_i, nhar_j
+    public :: get_coeffs, recover_coeffs, nhar_i, nhar_j
 
     integer, parameter ::   nhar_i = 12, &
                             nhar_j = 12
+
+    interface get_coeffs
+        module procedure get_full_coeffs
+        module procedure get_axial_coeffs
+    end interface get_coeffs
 
     type :: ftmp_t
         integer :: Ni, Nj
@@ -26,7 +31,8 @@ module fourier_mod
 
 contains
 
-    subroutine get_coeffs(topo_obj, mask, coeffs)
+    ! decrepate first attempt at computing get_coeffs
+    subroutine get_coeffs_deprecate(topo_obj, mask, coeffs)
         implicit none
         type(topo_t), intent(inout) :: topo_obj
         logical, dimension(:,:), intent(in) :: mask
@@ -95,7 +101,7 @@ contains
         topo_obj%lon_tri = lon_tri
         topo_obj%topo_tri = topo_tri
 
-    end subroutine get_coeffs
+    end subroutine get_coeffs_deprecate
 
 
     subroutine get_full_coeffs(topo_obj, mask, coeffs)
@@ -104,7 +110,7 @@ contains
         real, dimension(:,:), allocatable, intent(out) :: coeffs
         logical, dimension(:,:), intent(in) :: mask
         real, dimension(:,:), allocatable :: c_cos, c_sin, terms_sum
-        real, dimension(:,:,:), allocatable :: tmp_i, tmp_j
+        ! real, dimension(:,:,:), allocatable :: tmp_i, tmp_j
 
         type(ftmp_t) :: f_obj
         integer :: ncells, dense_sz, nhj_0
@@ -265,21 +271,53 @@ contains
     end subroutine prepare_terms
 
 
-    subroutine recover_coeffs(topo_obj, sol)
+    subroutine recover_coeffs(topo_obj, sol, full_spectrum)
         implicit none
         type(topo_t), intent(inout) :: topo_obj
         real, dimension(:), intent(in) :: sol
+        logical, intent(in) :: full_spectrum
 
         complex, allocatable :: recov_coeffs(:), recov_coeffs_ij(:,:)
-        integer :: mid = nhar_i * nhar_i
+        integer :: sep_sz, dense_sz, nhj_0, i, j, k, l
+        ! real, dimension(:), allocatable :: c_cos, c_sin, c_cos_k, c_sin_k, c_cos_l, c_sin_l
 
-        allocate (recov_coeffs(mid))
+
+        allocate (recov_coeffs(dense_sz))
+        recov_coeffs = cmplx(0.0)
+
+        if (full_spectrum) then
+            sep_sz = nhar_i * nhar_j - (nhar_j/2 + 1)
+            dense_sz = nhar_i * nhar_j
+
+            ! recov_coeffs(1:nhar_j/2) = cmplx(0.0)
+            recov_coeffs(nhar_j/2+1) = cmplx(sol(1))
+            recov_coeffs(nhar_j/2+2:dense_sz) = cmplx(sol(2:sep_sz+1), sol(sep_sz+2:size(sol))) / 2.0
+            recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
+            recov_coeffs_ij = transpose(recov_coeffs_ij)
+        else
+            sep_sz = (nhar_i-1) + (nhar_j/2 - 1)
+            nhj_0 = nhar_j/2 + 1 ! index of the zeroth j-wavenumber
+
+            k = 1
+            l = 1
+            do j = 1, nhar_j
+                do i = 1, nhar_i
+                    if ((j == nhj_0) .and. (i == 1)) then
+                        recov_coeffs(k) = sol(i)
+                    else if ((j == nhj_0) .and. (i > 1)) then
+                        recov_coeffs(k) = cmplx(sol(i), sol(sep_sz + i))
+                    end if
+                    if ((i == 1) .and. (j > nhj_0)) then
+                        recov_coeffs(k) = cmplx(sol(nhar_i + l), sol(sep_sz + nhar_i + l))
+                        l = l + 1
+                    end if
+                    k = k + 1
+                end do
+            end do
+
+            recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
+        end if
  
-        recov_coeffs(2:mid) = cmplx(sol(2:mid), sol(mid+1:size(sol))) / 2.0
-        recov_coeffs(1) = cmplx(sol(1))
-
-        recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
-
         topo_obj%nhar_i = nhar_i
         topo_obj%nhar_j = nhar_j
         topo_obj%fcoeffs = recov_coeffs_ij
