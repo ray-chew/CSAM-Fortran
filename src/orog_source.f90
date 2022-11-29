@@ -6,7 +6,7 @@ program orog_source
     use utils_mod
     use triangle_mod
     use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
-    use fourier_mod, only : get_coeffs, get_axial_coeffs, get_full_coeffs, nhar_i, nhar_j
+    use fourier_mod, only : get_coeffs, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
     use omp_lib
@@ -59,7 +59,8 @@ program orog_source
     print *, "Read topo_dat with shape: ", shape(topo_dat)
 
     call cpu_time(finish)
-    print '("Read time = ",f6.3," seconds.")',finish-start
+    print *, "Read time = ", finish-start ," seconds."
+    print *, ""
 
 
     Ncells = size(lat_center)
@@ -86,6 +87,7 @@ program orog_source
     !$OMP PARALLEL
     !$OMP SINGLE
     print *, "Number of OMP threads used: ", omp_get_num_threads()
+    print *, ""
     !$OMP END SINGLE
     !$OMP END PARALLEL
 
@@ -144,7 +146,7 @@ program orog_source
             if (debug_flags%verbose) print *, "Getting coefficients"
             ! call get_coeffs(topo_obj, mask, coeffs)
             if (run_flags%full_spectrum) then
-                call get_full_coeffs(topo_obj, mask, coeffs)
+                call get_coeffs(topo_obj, mask, coeffs)
             else
                 ! handle how to rotate axial wavenumbers
                 if (run_flags%rotation == 0) then
@@ -161,7 +163,7 @@ program orog_source
                 end if
                 do j = 1, size(alphas)
                     alpha = alphas(j)
-                    call get_axial_coeffs(topo_obj, mask, alpha, coeffs)
+                    call get_coeffs(topo_obj, mask, alpha, coeffs)
                 end do
                 
             end if
@@ -188,6 +190,7 @@ program orog_source
     call cpu_time(finish)
     wt_finish = omp_get_wtime()
     print *, "Done with meaty loop..."
+    print *, ""
     print *, "CPU time taken = ", (finish - start)
     print *, "Wall time taken = ", (wt_finish - wt_start)
 
