@@ -16,6 +16,7 @@ module utils_mod
         logical :: output
         logical :: skip_four
         logical :: recover_topo
+        logical :: verbose
     end type debug_t
 
     type :: tol_t
@@ -23,10 +24,16 @@ module utils_mod
         real :: dp_real
         real :: box_padding
     end type tol_t
+
+    type :: run_t
+        logical             :: full_spectrum
+        integer             :: rotation
+        character(len=128)  :: fn_optimal
+    end type run_t
 contains
 
     ! ref: https://cyber.dabamos.de/programming/modernfortran/namelists.html
-    subroutine get_namelist(fn, fn_grid,fn_topo, fn_output, tol, debug)
+    subroutine get_namelist(fn, fn_grid,fn_topo, fn_output, tol, debug, run)
         !! Reads Namelist from given file.
         character(len=*),  intent(in)    :: fn
         character(len=*),  intent(out)   :: fn_grid
@@ -34,11 +41,12 @@ contains
         character(len=*),  intent(out)   :: fn_output
         type(debug_t),     intent(out)   :: debug
         type(tol_t),       intent(out)   :: tol
+        type(run_t),       intent(out)   :: run
         integer                          :: stat
         integer                          :: unit
 
         ! Namelist definition.
-        namelist /USERDATA/ fn_grid, fn_topo, fn_output, tol, debug
+        namelist /USERDATA/ fn_grid, fn_topo, fn_output, tol, debug, run
 
         ! Check whether file exists.
         inquire (file=fn, iostat=stat)
@@ -104,13 +112,13 @@ contains
     end subroutine rad_to_deg
 
 
-    elemental subroutine deg_to_rad(value)
+    elemental real function deg_to_rad(deg_val) result(rad_val)
         implicit none
-        real, intent(inout) :: value
+        real, intent(in) :: deg_val
 
-        value = value / 180.0 * PI
+        rad_val = deg_val / 180.0 * PI
         
-    end subroutine deg_to_rad
+    end function deg_to_rad
 
 
     function get_N_unique(arr) result(cnt)
