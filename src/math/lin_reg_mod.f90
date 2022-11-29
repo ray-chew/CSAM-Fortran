@@ -12,7 +12,7 @@ module lin_reg_mod
 
 contains
 
-    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, full, recover_topo)
+    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, full_spectrum, recover_topo)
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
@@ -27,7 +27,7 @@ contains
 
         logical, intent(in) :: mask(:,:)
         logical, intent(in) :: recover_topo
-        logical, intent(in) :: full
+        logical, intent(in) :: full_spectrum
         ! if (.not. present(recover_topo)) then
         !     recover_topo = .false.
         ! end if 
@@ -60,7 +60,7 @@ contains
         end if
 
         call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, sol, nc)
-        call recover_coeffs(topo_obj, sol)
+        call recover_coeffs(topo_obj, sol, full_spectrum)
 
         if (recover_topo) then
             call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, sol, nc, 0.0, z_recon, nd)
