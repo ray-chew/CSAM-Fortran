@@ -5,7 +5,7 @@ program orog_source
     use write_data_mod
     use utils_mod
     use triangle_mod
-    use topo_mod, only : topo_t, get_topo, dealloc_topo_obj
+    use topo_mod, only : topo_t, get_topo, dealloc_topo_obj, get_l2_err
     use fourier_mod, only : get_coeffs, nhar_i, nhar_j
     use lin_reg_mod, only : do_lin_reg
     use error_status, only : ALLOCATION_ERR
@@ -16,12 +16,13 @@ program orog_source
     type(debug_t) :: debug_flags
     type(tol_t) :: tol_flags
     type(run_t) :: run_flags
-    real, dimension(:), allocatable :: lat_center, lon_center, alphas
+    real, dimension(:), allocatable :: lat_center, lon_center, alphas, alphas_search, opt_deg, err_val
     integer, dimension(:,:), allocatable :: link_map
-    real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs
+    real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs, errs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
     integer :: i, j, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
+    integer :: ndegrees_dim_id, Ndegrees
     real :: clat, clon, nan, alpha
     complex, allocatable :: fcoeffs(:,:,:)
 
@@ -29,8 +30,10 @@ program orog_source
     type(llgrid_t) :: llgrid_obj
     logical, dimension(:,:), allocatable :: mask
     integer, parameter :: chunk=100
+    logical :: tmp_switch = .false.
 
     nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
+    Ndegrees = 90
 
     print *, "Reading grid and linker data..."
     call cpu_time(start)
@@ -70,12 +73,19 @@ program orog_source
     nhi_dim_id = create_dim(ncid, 'nhar_i', nhar_i)
     nhj_dim_id = create_dim(ncid, 'nhat_j', nhar_j)
     ncell_dim_id = create_dim(ncid, 'ncell', Ncells)
+    ndegrees_dim_id = create_dim(ncid, 'ndegrees', Ndegrees+1)
 
     ! if (debug_flags%output) then
         ! ...
     ! end if
     call close_dataset(ncid)
     ! END I/O handling
+
+    if (run_flags%rotation == 1) then
+        allocate (err_val(Ndegrees + 1))
+        allocate (errs(Ndegrees +1, Ncells))
+        allocate (opt_deg(Ncells))
+    end if
 
 
     allocate (fcoeffs(nhar_j,nhar_i,Ncells), stat=stat)
@@ -98,8 +108,9 @@ program orog_source
 
     !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
     !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
-    !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output)          &
-    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ncells) &
+    !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output,                &
+    !$OMP& errs, opt_deg)       &
+    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ndegrees, Ncells) &
     !$OMP& SCHEDULE(DYNAMIC)
     do i = 1, Ncells
         if (debug_flags%verbose) print *, "Starting cell: ", i
@@ -150,16 +161,40 @@ program orog_source
             else
                 ! handle how to rotate axial wavenumbers
                 if (run_flags%rotation == 0) then
+
                     alphas = (/0.0/)
+
                 else if (run_flags%rotation == 1) then
-                    alphas = (/(j, j=0, 90, 1)/)
+
+                    alphas_search = (/(j, j=0, Ndegrees, 1)/)
+
+                    tmp_switch = debug_flags%recover_topo
+                    debug_flags%recover_topo = .true.
+
+                    do j = 1, size(alphas_search)
+                        alpha = alphas_search(j)
+                        call get_coeffs(topo_obj, mask, alpha, coeffs)
+                        call do_lin_reg(coeffs, topo_obj, mask, i, .true., debug_flags, tol_flags)
+                        err_val(j) = get_l2_err(topo_obj)
+                    end do
+
+                    debug_flags%recover_topo = tmp_switch
+                    alphas = real(minloc(err_val)) - 1.0
+
+                    opt_deg(i) = alphas(1)
+                    errs(:,i) = err_val
+
                 else if (run_flags%rotation == 2) then
+
                     ! alphas = get_pca_angle()
                     alphas = (/0.0/)
                     print *, "Method not implemented"
+
                 else if (run_flags%rotation == 3) then
+
                     alphas = (/0.0/)
                     print *, "Method not implemented"
+
                 end if
                 do j = 1, size(alphas)
                     alpha = alphas(j)
@@ -199,6 +234,10 @@ program orog_source
 
     ncid = open_dataset(fn_output)
     stat = write_data(ncid, 'fcoeffs', fcoeffs, (/nhj_dim_id,nhi_dim_id,ncell_dim_id/))
+    if (run_flags%rotation == 1) then
+        stat = write_data(ncid, 'opt_deg', opt_deg, (/ncell_dim_id/))
+        stat = write_data(ncid, 'errs', errs, (/ndegrees_dim_id,ncell_dim_id/))
+    end if
     call close_dataset(ncid)
 
 end program orog_source

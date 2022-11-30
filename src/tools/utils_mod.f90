@@ -161,6 +161,4 @@ contains
     end function bool2int
 
 
-
-
 end module utils_mod

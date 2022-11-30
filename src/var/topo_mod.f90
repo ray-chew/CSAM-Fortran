@@ -8,7 +8,7 @@ module topo_mod
 
     private
 
-    public :: topo_t, get_topo, get_topo_idx, dealloc_topo_obj
+    public :: topo_t, get_topo, get_topo_idx, dealloc_topo_obj, get_l2_err
 
     type :: topo_t
         real, dimension(:), allocatable :: lat, lon, lat_tri, lon_tri, topo_tri
@@ -481,5 +481,18 @@ contains
         call sort_index(arr, idx, work, iwork)
 
     end subroutine sort_by_index
+
+    function get_l2_err(obj) result(err_val)
+        type(topo_t), intent(in) :: obj
+        real :: err_val
+        real, dimension(:,:), allocatable :: tmp_arr
+
+        tmp_arr = obj%topo - obj%topo_recon_2D
+        tmp_arr = tmp_arr * tmp_arr
+
+        err_val = sum(tmp_arr)
+        err_val = sqrt(err_val)
+    
+    end function get_l2_err
 
 end module topo_mod
