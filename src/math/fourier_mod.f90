@@ -305,6 +305,7 @@ contains
 
         dense_sz = nhar_i * nhar_j
         allocate (recov_coeffs(dense_sz))
+        allocate (recov_coeffs_ij(nhar_i, nhar_j))
         recov_coeffs = cmplx(0.0)
 
         if (full_spectrum) then
@@ -313,8 +314,8 @@ contains
             ! recov_coeffs(1:nhar_j/2) = cmplx(0.0)
             recov_coeffs(nhar_j/2+1) = cmplx(sol(1))
             recov_coeffs(nhar_j/2+2:) = cmplx(sol(2:sep_sz+1), sol(sep_sz+2:)) / 2.0
-            recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
-            recov_coeffs_ij = transpose(recov_coeffs_ij)
+            recov_coeffs_ij(:,:) = reshape(recov_coeffs,(/nhar_i,nhar_j/))
+            recov_coeffs_ij(:,:) = transpose(recov_coeffs_ij)
         else
             sep_sz = (nhar_i-1) + (nhar_j/2 - 1)
             nhj_0 = nhar_j/2 + 1 ! index of the zeroth j-wavenumber
@@ -342,6 +343,7 @@ contains
         topo_obj%nhar_i = nhar_i
         topo_obj%nhar_j = nhar_j
         topo_obj%fcoeffs = recov_coeffs_ij
+
     end subroutine recover_coeffs
 
 
