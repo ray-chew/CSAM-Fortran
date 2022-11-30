@@ -379,7 +379,7 @@ contains
         deallocate (lat_grid_nrecs)
         deallocate (lon_grid_nrecs)
 
-        call get_sorted_topo(lat_vec, lon_vec, tmp_topo, obj)
+        call get_sorted_topo(lat_vec, tmp_topo, obj)
         
         ! obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
 
@@ -438,9 +438,9 @@ contains
     end subroutine check_dupl_arrs
 
 
-    subroutine get_sorted_topo(lat_vec, lon_vec, topo_vec, obj)
+    subroutine get_sorted_topo(lat_vec, topo_vec, obj)
         implicit none
-        real, dimension(:), intent(inout) :: lat_vec, lon_vec, topo_vec 
+        real, dimension(:), intent(inout) :: lat_vec, topo_vec 
         type(topo_t), intent(inout) :: obj
 
 
@@ -490,6 +490,12 @@ contains
         type(topo_t), intent(in) :: obj
         real :: err_val
         real, dimension(:,:), allocatable :: tmp_arr
+        integer :: d1, d2
+
+        d1 = size(obj%topo, dim = 1)
+        d2 = size(obj%topo, dim = 2)
+
+        allocate (tmp_arr(d1, d2))
 
         tmp_arr = obj%topo - obj%topo_recon_2D
         tmp_arr = tmp_arr * tmp_arr

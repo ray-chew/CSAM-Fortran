@@ -13,7 +13,7 @@ module fourier_mod
                             nhar_j = 12
 
     interface get_coeffs
-        module procedure get_full_coeffs
+        module procedure get_coeffs_deprecate
         module procedure get_axial_coeffs
     end interface get_coeffs
 
@@ -355,7 +355,13 @@ contains
         real, dimension(:,:), allocatable :: re, im
         real, dimension(:), allocatable :: t_cos, t_sin
 
-        integer :: sep_sz
+        integer :: sep_sz, d1, d2
+
+        d1 = size(obj%fcoeffs, dim = 1)
+        d2 = size(obj%fcoeffs, dim = 2)
+
+        allocate (re(d1, d2))
+        allocate (im(d1, d2))
 
         re = real(obj%fcoeffs)
         im = aimag(obj%fcoeffs)
