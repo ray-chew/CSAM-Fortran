@@ -1,4 +1,4 @@
-!userdata.nml
+!small_tests.nml
 &USERDATA
 
     fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked_6.nc"
@@ -12,6 +12,7 @@
     debug%output = .true.           ! do we verbose output result after each substep?
     debug%skip_four = .false.       ! do we skip the fourier computation substep?
     debug%recover_topo = .true.     ! do we recover the topography? 
+    debug%recover_sol = .true.      ! do we recover the solution of the linear regression from fcoeffs?
     debug%verbose = .false.         ! do we do verbose printing of progress?
 
     tol%box_padding = 0.0       ! add padding to box search in degrees lat and lon
