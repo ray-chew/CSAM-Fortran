@@ -2,7 +2,6 @@ module utils_mod
     use, intrinsic :: iso_fortran_env, only : error_unit, output_unit
     use :: error_status, only : COMMAND_LINE_ERR
     use :: const_mod, only : PI
-    ! use :: stdlib_sorting, only : ord_sort
     implicit none
 
     interface get_fn
@@ -16,6 +15,7 @@ module utils_mod
         logical :: output
         logical :: skip_four
         logical :: recover_topo
+        logical :: recover_sol
         logical :: verbose
     end type debug_t
 

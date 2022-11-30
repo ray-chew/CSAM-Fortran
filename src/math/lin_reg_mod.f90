@@ -2,7 +2,8 @@ module lin_reg_mod
     use :: topo_mod, only : topo_t
     use, intrinsic :: iso_fortran_env, only : error_unit
     use :: error_status, only : LINALG_ERR
-    use :: fourier_mod, only : recover_coeffs
+    use :: fourier_mod, only : recover_coeffs, recover_sol
+    use :: utils_mod, only : debug_t, tol_t
 
     implicit none
 
@@ -12,7 +13,7 @@ module lin_reg_mod
 
 contains
 
-    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, full_spectrum, recover_topo)
+    subroutine do_lin_reg(coeffs, topo_obj, mask, ncell, full_spectrum, debug, tol)
         implicit none
         real, dimension(:,:), intent(in) :: coeffs
         type(topo_t), intent(inout) :: topo_obj
@@ -26,11 +27,9 @@ contains
         real, dimension(size(coeffs,dim=2)) :: z_recon
 
         logical, intent(in) :: mask(:,:)
-        logical, intent(in) :: recover_topo
+        type(debug_t), intent(in) :: debug
+        type(tol_t), intent(in) :: tol
         logical, intent(in) :: full_spectrum
-        ! if (.not. present(recover_topo)) then
-        !     recover_topo = .false.
-        ! end if 
 
         nc = size(coeffs,dim=1)
         nd = size(coeffs,dim=2)
@@ -62,7 +61,13 @@ contains
         call dgemm('n','n', nc, 1, nc, 1.0, Minv, nc, h_hat, nc, 0.0, sol, nc)
         call recover_coeffs(topo_obj, sol, full_spectrum)
 
-        if (recover_topo) then
+        if (debug%recover_topo) then
+            if (debug%recover_sol) then
+                if (debug%verbose) print *, "recovering sol from fcoeffs..."
+                call recover_sol(topo_obj, sol, tol, full_spectrum)
+            end if
+
+            if (debug%verbose) print *, "recovering topography from spectrum"
             call dgemm('t','n', nd, 1, nc, 1.0, coeffs, nc, sol, nc, 0.0, z_recon, nd)
             call recon_2D(topo_obj, z_recon, mask)
         end if

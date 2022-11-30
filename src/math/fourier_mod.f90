@@ -1,13 +1,13 @@
 module fourier_mod
     use :: topo_mod, only : topo_t
-    use :: utils_mod, only : get_N_unique, deg_to_rad
+    use :: utils_mod, only : get_N_unique, deg_to_rad, tol_t
     use :: const_mod, only : PI
     use :: stdlib_sorting, only : ord_sort
     implicit none
 
     private
 
-    public :: get_coeffs, recover_coeffs, nhar_i, nhar_j
+    public :: get_coeffs, recover_coeffs, recover_sol, nhar_i, nhar_j
 
     integer, parameter ::   nhar_i = 12, &
                             nhar_j = 12
@@ -321,6 +321,43 @@ contains
         topo_obj%nhar_j = nhar_j
         topo_obj%fcoeffs = recov_coeffs_ij
     end subroutine recover_coeffs
+
+
+    subroutine recover_sol(obj, sol, tol, full_spectrum)
+        implicit none
+        type(topo_t), intent(in) :: obj
+        type(tol_t), intent(in) :: tol
+        logical, intent(in) :: full_spectrum
+        real, dimension(:), intent(inout) :: sol
+
+        real, dimension(:,:), allocatable :: re, im
+        real, dimension(:), allocatable :: t_cos, t_sin
+
+        integer :: sep_sz
+
+        re = real(obj%fcoeffs)
+        im = aimag(obj%fcoeffs)
+
+        if (full_spectrum) then
+            re = transpose(re)
+            im = transpose(im)
+        end if
+
+        t_cos = pack(re, (abs(re) > tol%dp_real ))
+        t_sin = pack(im, (abs(im) > tol%dp_real ))
+
+        if (full_spectrum) then
+            sep_sz = nhar_i * nhar_j - (nhar_j/2 + 1) + 1
+            t_cos(2:) = 2.0 * t_cos(2:)
+            t_sin = 2.0 * t_sin
+        else
+            sep_sz = nhar_i + (nhar_j / 2 - 1)
+        end if
+
+        sol(1:sep_sz ) = t_cos
+        sol(sep_sz+1:) = t_sin
+
+    end subroutine recover_sol
 
 
 end module fourier_mod

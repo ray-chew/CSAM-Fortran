@@ -169,7 +169,7 @@ program orog_source
             end if
 
             if (debug_flags%verbose) print *, "Doing linear regression"
-            call do_lin_reg(coeffs, topo_obj, mask, i, run_flags%full_spectrum, debug_flags%recover_topo)
+            call do_lin_reg(coeffs, topo_obj, mask, i, run_flags%full_spectrum, debug_flags, tol_flags)
             fcoeffs(:,:,i) = topo_obj%fcoeffs
 
             print *, "Completed cell: ", i
