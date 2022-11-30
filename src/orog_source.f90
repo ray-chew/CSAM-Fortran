@@ -219,6 +219,8 @@ program orog_source
             !$OMP END CRITICAL
 
         end if
+        call dealloc_topo_obj(topo_obj)
+        deallocate(mask)
     end do
     !$OMP END PARALLEL DO
 
@@ -251,7 +253,9 @@ program orog_source
     deallocate(topo_dat)
 
     deallocate(fcoeffs)
-    deallocate(opt_deg)
-    deallocate(errs)
+    if (run_flags%rotation == 1) then
+        deallocate(opt_deg)
+        deallocate(errs)
+    end if
 
 end program orog_source

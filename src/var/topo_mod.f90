@@ -406,6 +406,10 @@ contains
 
         deallocate(obj%fcoeffs)
 
+        if (allocated(obj%topo_recon_2D)) then
+            deallocate(obj%topo_recon_2D)
+        end if
+
     end subroutine dealloc_topo_obj 
 
 
