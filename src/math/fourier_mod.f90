@@ -31,6 +31,19 @@ module fourier_mod
 
 contains
 
+    subroutine dealloc_ftmp_obj(obj)
+        implicit none
+        type(ftmp_t), intent(out) :: obj
+
+        deallocate(mi)
+        deallocate(mj)
+        deallocate(II)
+        deallocate(JJ)
+        deallocate(terms_i)
+        deallocate(terms_j)
+
+    end subroutine dealloc_ftmp_obj
+
     ! decrepate first attempt at computing get_coeffs
     subroutine get_coeffs_deprecate(topo_obj, mask, coeffs)
         implicit none
@@ -150,6 +163,8 @@ contains
         coeffs(1 : size(c_cos, dim=2),:) = transpose(c_cos)
         coeffs(size(c_cos, dim=2)+1 : size(c_cos, dim=2) + size(c_sin, dim=2), :) = transpose(c_sin)
 
+        call dealloc_ftmp_obj(f_obj)
+
     end subroutine get_full_coeffs
 
 
@@ -211,6 +226,8 @@ contains
         ! We do a transpose here to make our coefficients column-major again
         coeffs(1:size(c_cos,dim=2),:) = transpose(c_cos)
         coeffs(size(c_cos,dim=2)+1:size(c_cos,dim=2)+size(c_sin,dim=2),:) = transpose(c_sin)
+
+        call dealloc_ftmp_obj(f_obj)
 
     end subroutine
 
