@@ -365,6 +365,20 @@ contains
         
         tmp_topo = pack(topo_nrecs, tmp_indices_3D)
 
+        deallocate (tmp_lat)
+        deallocate (tmp_lon)
+        deallocate (cond_lat)
+        deallocate (cond_lon)
+        deallocate (tmp_indices)
+        deallocate (lat_indices)
+        deallocate (lon_indices)
+        deallocate (lat_nrecs)
+        deallocate (lon_nrecs)
+        deallocate (tmp_indices_3D)
+        deallocate (topo_nrecs)
+        deallocate (lat_grid_nrecs)
+        deallocate (lon_grid_nrecs)
+
         call get_sorted_topo(lat_vec, lon_vec, tmp_topo, obj)
         
         ! obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)

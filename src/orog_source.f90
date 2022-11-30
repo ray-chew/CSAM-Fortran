@@ -99,7 +99,7 @@ program orog_source
     !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
     !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
     !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output)          &
-    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags) &
+    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ncells) &
     !$OMP& SCHEDULE(DYNAMIC)
     do i = 1, Ncells
         if (debug_flags%verbose) print *, "Starting cell: ", i
