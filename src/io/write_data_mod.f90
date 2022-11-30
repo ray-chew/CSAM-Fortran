@@ -157,6 +157,14 @@ contains
         complex, dimension(:,:,:), intent(in) :: array
         real(kind=DP), dimension(:,:,:), allocatable :: r_arr, i_arr
         integer :: stat, re_id, im_id
+        integer :: d1, d2, d3
+
+        d1 = size(array, dim = 1)
+        d2 = size(array, dim = 2)
+        d3 = size(array, dim = 3)
+
+        allocate (r_arr(d1,d2,d3))
+        allocate (i_arr(d1,d2,d3))
 
         r_arr = real(array)
         i_arr = real(aimag(array))

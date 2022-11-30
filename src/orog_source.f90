@@ -209,10 +209,6 @@ program orog_source
 
             print *, "Completed cell: ", i
 
-            call dealloc_topo_obj(topo_obj)
-            deallocate(coeffs)
-            deallocate(mask)
-
             !$OMP CRITICAL
             if ((debug_flags%output) .and. (debug_flags%recover_topo)) then
                 ncid = open_dataset(fn_output)
@@ -222,6 +218,9 @@ program orog_source
             end if
             !$OMP END CRITICAL
 
+            call dealloc_topo_obj(topo_obj)
+            deallocate(coeffs)
+            deallocate(mask)
         end if
     end do
     !$OMP END PARALLEL DO

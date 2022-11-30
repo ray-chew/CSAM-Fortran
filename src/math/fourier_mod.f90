@@ -33,14 +33,14 @@ contains
 
     subroutine dealloc_ftmp_obj(obj)
         implicit none
-        type(ftmp_t), intent(out) :: obj
+        type(ftmp_t), intent(inout) :: obj
 
-        deallocate(mi)
-        deallocate(mj)
-        deallocate(II)
-        deallocate(JJ)
-        deallocate(terms_i)
-        deallocate(terms_j)
+        deallocate(obj%m_i)
+        deallocate(obj%m_j)
+        deallocate(obj%II)
+        deallocate(obj%JJ)
+        deallocate(obj%terms_i)
+        deallocate(obj%terms_j)
 
     end subroutine dealloc_ftmp_obj
 
@@ -152,6 +152,11 @@ contains
         ! f_obj%terms_j = reshape(tmp_j, (/ncells, dense_sz/), order=(/1,2/))
 
         nhj_0 = nhar_j / 2 + 1 ! index position of the zeroth j-wavenumber
+
+        allocate (terms_sum(ncells, dense_sz))
+        allocate (c_cos(ncells, dense_sz-nhj_0))
+        allocate (c_sin(ncells, dense_sz-nhj_0-1))
+
         terms_sum = f_obj%terms_i + f_obj%terms_j
 
         c_cos = cos(2.0 * PI * terms_sum(:,nhj_0:dense_sz))
