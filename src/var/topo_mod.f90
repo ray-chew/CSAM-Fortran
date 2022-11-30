@@ -2,6 +2,7 @@ module topo_mod
     use, intrinsic :: iso_fortran_env, only : error_unit, DP => real64
     use :: error_status, only : ALLOCATION_ERR
     use :: triangle_mod, only : llgrid_t
+    use :: stdlib_sorting, only : sort_index, int_size
     use omp_lib
     implicit none
 
@@ -198,9 +199,9 @@ contains
         ! logical :: lat_indices(size(lat,dim=1)), lon_indices(size(lon,dim=1))
         ! logical :: lat_indices(size(lat,dim=1), size(lat,dim=2)), lon_indices(size(lon,dim=1), size(lon,dim=2))
         logical, dimension(:,:), allocatable :: lat_indices, lon_indices
-        real, dimension(:), allocatable :: tmp_topo
+        real, dimension(:), allocatable :: tmp_topo, lat_vec, lon_vec
         real, dimension(:,:), allocatable :: lat_grid, lon_grid, lat_nrecs, lon_nrecs, tmp_topo_grid
-        real, dimension(:,:,:), allocatable :: topo_nrecs
+        real, dimension(:,:,:), allocatable :: topo_nrecs, lat_grid_nrecs, lon_grid_nrecs
         real, optional, intent(in) :: tol
         real :: tol_
         if (present(tol)) then
@@ -216,7 +217,6 @@ contains
         ! get the number of records
         ! nrecs = size(topo,dim=3)
         nrecs = count(link_map > 0)
-        ! nrecs = 27
 
         ! print *, count(lat_indices)
         ! print *, count(lon_indices)
@@ -243,6 +243,8 @@ contains
         end if
 
         allocate (topo_nrecs(nlon,nlat,nrecs), stat=stat)
+        allocate (lat_grid_nrecs(nlon,nlat,nrecs), stat=stat)
+        allocate (lon_grid_nrecs(nlon,nlat,nrecs), stat=stat)
         if (stat /= 0) then
             write(unit=error_unit, fmt='(A)') "Error allocating nrecs array for topo_obj"
             stop ALLOCATION_ERR
@@ -265,8 +267,11 @@ contains
             lon_nrecs(:,i) = lon(:,nrec)
             tmp_topo_grid = topo(:,:,nrec)
             tmp_topo_grid = tmp_topo_grid(:,ubound(tmp_topo_grid,dim=2):lbound(tmp_topo_grid,dim=2):-1)
+            ! tmp_topo_grid = tmp_topo_grid(ubound(tmp_topo_grid,dim=1):lbound(tmp_topo_grid,dim=1):-1,:)
             topo_nrecs(:,:,i) = tmp_topo_grid !topo(:,:,nrec)
             ! topo_nrecs(:,:,i) = topo(:,:,nrec)
+            lat_grid_nrecs(:,:,i) = lat_grid
+            lon_grid_nrecs(:,:,i) = lon_grid
 
             cond_lat = .false.
             cond_lon = .false.
@@ -296,7 +301,8 @@ contains
             ! print *, "count(tmp_lon) = ", count(tmp_lon)
 
             ! Why do we need to flip the latitude axis?
-            tmp_indices_3D(:,:,i) = tmp_indices !tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
+            tmp_indices_3D(:,:,i) = tmp_indices !
+            ! tmp_indices_3D(:,:,i) = tmp_indices(:,ubound(tmp_indices,dim=2):lbound(tmp_indices,dim=2):-1)
         end do
 
         ! print *, "nloop done"
@@ -309,7 +315,6 @@ contains
         ! print *, "count(tmp_lon) = ", count(tmp_lon)
 
         ! this do loop takes care of the corner cases where topography data are in separate nfiles/nrecs but with the same lat or lon underlying grid.
-        ! put tolerance into nml flags
         ! if (nrecs > 2) then
         !     do i = 1, nrecs-1
         !         if (all(abs(lat_nrecs(:,i) - lat_nrecs(:,i+1)) < tol)) then
@@ -327,12 +332,15 @@ contains
         !     end if
         ! else if (nrecs == 2 ) then
         !     if (all(abs(lat_nrecs(:,1) - lat_nrecs(:,nrecs)) < tol)) then
-        !         lat_indices(:,nrecs) = .false.
+        !         lat_indices(:,1) = .false.
         !     end if
         !     if (all(abs(lon_nrecs(:,1) - lon_nrecs(:,nrecs)) < tol)) then
-        !         lon_indices(:,nrecs) = .false.
+        !         lon_indices(:,1) = .false.
         !     end if
         ! end if
+
+        lat_vec = pack(lat_grid_nrecs,  tmp_indices_3D)
+        lon_vec = pack(lon_grid_nrecs,  tmp_indices_3D)
 
         if (nrecs > 1) then
             do i = 0, nrecs-2
@@ -348,22 +356,23 @@ contains
         obj%lat  = pack(lat_nrecs,  lat_indices)
         obj%lon  = pack(lon_nrecs,  lon_indices)
 
+        obj%lat_grid = spread(obj%lat, 1, size(obj%lon))
+        obj%lon_grid = spread(obj%lon, 2, size(obj%lat))
         ! print *, "obj%lat size: ", size(obj%lat)
         ! print *, "obj%lon size: ", size(obj%lon)
 
         allocate (tmp_topo(size(obj%lat) * size(obj%lon)))
         
         tmp_topo = pack(topo_nrecs, tmp_indices_3D)
+
+        call get_sorted_topo(lat_vec, lon_vec, tmp_topo, obj)
         
-        obj%topo = reshape(tmp_topo, shape=(/size(obj%lon),size(obj%lat)/), order=(/1,2/))
         ! obj%topo = obj%topo(:,ubound(obj%topo,dim=2):lbound(obj%topo,dim=2):-1)
 
         if ((size(obj%lat) * size(obj%lon)) /= size(obj%topo)) then
             write(unit=error_unit, fmt='(A)') "Error: Gathered subpoints shapes do not match."
         end if
 
-        obj%lat_grid = spread(obj%lat, 1, size(obj%lon))
-        obj%lon_grid = spread(obj%lon, 2, size(obj%lat))
     end subroutine get_topo_by_index
 
 
@@ -409,5 +418,54 @@ contains
         ! end if
         
     end subroutine check_dupl_arrs
+
+
+    subroutine get_sorted_topo(lat_vec, lon_vec, topo_vec, obj)
+        implicit none
+        real, dimension(:), intent(inout) :: lat_vec, lon_vec, topo_vec 
+        type(topo_t), intent(inout) :: obj
+
+
+        real, dimension(:), allocatable :: col_topo, col_lon
+        integer(kind = int_size), dimension(:), allocatable :: idx
+        integer :: i, nlat, nlon
+
+        allocate (idx(size(lat_vec)))
+        
+        call sort_by_index(lat_vec, idx)
+        topo_vec(:) = topo_vec(idx)
+
+        nlat = size(obj%lat)
+        nlon = size(obj%lon)
+
+        deallocate (idx)
+        allocate (idx(nlon))
+
+        obj%topo = reshape(topo_vec, shape=(/size(obj%lon),size(obj%lat)/), order=(/1,2/))
+
+            do i = 1, nlat
+                col_lon = obj%lon_grid(:,i)
+                col_topo = obj%topo(:,i)
+                call sort_by_index(col_lon, idx)
+                obj%topo(:,i) = col_topo(idx)
+            end do
+
+    end subroutine get_sorted_topo
+
+
+    subroutine sort_by_index(arr, idx)
+        implicit none
+        real, dimension(:), intent(inout)    :: arr
+        integer(int_size), dimension(:), intent(out)   :: idx
+
+        real, dimension(:), allocatable :: work
+        integer(int_size), dimension(:), allocatable :: iwork
+
+        allocate (work(size(arr) / 2))
+        allocate (iwork(size(arr) / 2))
+
+        call sort_index(arr, idx, work, iwork)
+
+    end subroutine sort_by_index
 
 end module topo_mod
