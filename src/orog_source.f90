@@ -124,9 +124,9 @@ program orog_source
         end if
         !$OMP END CRITICAL
 
-        if (.false.) then
+        if ((maxval(topo_obj%topo)) < 1.0) then
 
-            print *, "Skipping ocean cell: ", i
+            print *, "Skipping (H < 1.0) cell: ", i
             fcoeffs(:,:,i) = nan
             ! print *, "Below sea level cell: ", i
 
