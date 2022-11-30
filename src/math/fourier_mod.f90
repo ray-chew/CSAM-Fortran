@@ -290,7 +290,7 @@ contains
 
             ! recov_coeffs(1:nhar_j/2) = cmplx(0.0)
             recov_coeffs(nhar_j/2+1) = cmplx(sol(1))
-            recov_coeffs(nhar_j/2+2:dense_sz) = cmplx(sol(2:sep_sz+1), sol(sep_sz+2:size(sol))) / 2.0
+            recov_coeffs(nhar_j/2+2:) = cmplx(sol(2:sep_sz+1), sol(sep_sz+2:)) / 2.0
             recov_coeffs_ij = reshape(recov_coeffs,(/nhar_i,nhar_j/))
             recov_coeffs_ij = transpose(recov_coeffs_ij)
         else

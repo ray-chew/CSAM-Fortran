@@ -83,7 +83,7 @@ program orog_source
 
     if (run_flags%rotation == 1) then
         allocate (err_val(Ndegrees + 1))
-        allocate (errs(Ndegrees +1, Ncells))
+        allocate (errs(Ndegrees + 1, Ncells))
         allocate (opt_deg(Ncells))
     end if
 
@@ -239,5 +239,19 @@ program orog_source
         stat = write_data(ncid, 'errs', errs, (/ndegrees_dim_id,ncell_dim_id/))
     end if
     call close_dataset(ncid)
+
+    deallocate(lat_center)
+    deallocate(lon_center)
+    deallocate(lat_vert)
+    deallocate(lon_vert)
+    deallocate(link_map)
+
+    deallocate(topo_lat)
+    deallocate(topo_lon)
+    deallocate(topo_dat)
+
+    deallocate(fcoeffs)
+    deallocate(opt_deg)
+    deallocate(errs)
 
 end program orog_source
