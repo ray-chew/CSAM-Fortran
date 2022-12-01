@@ -1,7 +1,7 @@
 module fourier_mod
     use :: topo_mod, only : topo_t
     use :: utils_mod, only : get_N_unique, deg_to_rad, tol_t
-    use :: const_mod, only : PI
+    use :: const_mod, only : PI, AE
     use :: stdlib_sorting, only : ord_sort
     implicit none
 
@@ -13,7 +13,7 @@ module fourier_mod
                             nhar_j = 12
 
     interface get_coeffs
-        module procedure get_coeffs_deprecate
+        module procedure get_full_coeffs
         module procedure get_axial_coeffs
     end interface get_coeffs
 
@@ -68,6 +68,9 @@ contains
 
         II = ceiling((lat_tri - minval(lat_tri)) / d_lat)
         JJ = ceiling((lon_tri - minval(lon_tri)) / d_lon)
+
+        topo_obj%wavelength_lat = d_lat
+        topo_obj%wavelength_lon = d_lon
         
         Ni = get_N_unique(II)
         JJ_tmp = JJ
@@ -259,8 +262,15 @@ contains
         d_lat = topo_obj%lat(2) - topo_obj%lat(1)
         d_lon = topo_obj%lon(2) - topo_obj%lon(1)
 
+        topo_obj%wavelength_lat = d_lat
+        topo_obj%wavelength_lon = d_lon
+
         f_obj%II = ceiling((lat_tri - minval(lat_tri)) / d_lat)
         f_obj%JJ = ceiling((lon_tri - minval(lon_tri)) / d_lon)
+
+        ! Don't forget to factor in Earth's curvature
+        ! f_obj%II = ((lat_tri - minval(lat_tri)) / 180.0 * PI * AE)
+        ! f_obj%JJ = ((lon_tri - minval(lon_tri)) / 180.0 * PI * AE)
 
     end subroutine get_IJ
 

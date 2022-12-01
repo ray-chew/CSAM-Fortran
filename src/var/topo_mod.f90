@@ -16,6 +16,8 @@ module topo_mod
 
         integer :: nhar_i, nhar_j
         complex, dimension(:,:), allocatable :: fcoeffs
+
+        real :: wavelength_lat, wavelength_lon
     end type topo_t
 
     interface get_topo

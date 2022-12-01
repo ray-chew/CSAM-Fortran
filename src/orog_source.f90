@@ -16,7 +16,7 @@ program orog_source
     type(debug_t) :: debug_flags
     type(tol_t) :: tol_flags
     type(run_t) :: run_flags
-    real, dimension(:), allocatable :: lat_center, lon_center, alphas, alphas_search, opt_deg, err_val
+    real, dimension(:), allocatable :: lat_center, lon_center, alphas, wls_lat, wls_lon, alphas_search, opt_deg, err_val
     integer, dimension(:,:), allocatable :: link_map
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs, errs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
@@ -98,6 +98,9 @@ program orog_source
         stop ALLOCATION_ERR
     end if
 
+    allocate (wls_lat(Ncells))
+    allocate (wls_lon(Ncells))
+
     !$OMP PARALLEL
     !$OMP SINGLE
     print *, "Number of OMP threads used: ", omp_get_num_threads()
@@ -110,10 +113,10 @@ program orog_source
     wt_start = omp_get_wtime()
     print *, "Entering meaty loop..."
 
-    !$OMP  PARALLEL DO DEFAULT(PRIVATE)     &
-    !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
+    !$OMP  PARALLEL DO DEFAULT(PRIVATE)                                     &
+    !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,     &
     !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output,                &
-    !$OMP& errs, opt_deg)       &
+    !$OMP& errs, opt_deg, wls_lat, wls_lon)                                 &
     !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ndegrees, Ncells, err_val, nan) &
     !$OMP& SCHEDULE(DYNAMIC)
     do i = 1, Ncells
@@ -218,6 +221,8 @@ program orog_source
             if (debug_flags%verbose) print *, "Doing linear regression"
             call do_lin_reg(coeffs, topo_obj, mask, i, run_flags%full_spectrum, debug_flags, tol_flags)
             fcoeffs(:,:,i) = topo_obj%fcoeffs
+            wls_lat(i) = topo_obj%wavelength_lat
+            wls_lon(i) = topo_obj%wavelength_lon
 
             print *, "Completed cell: ", i
 
@@ -249,6 +254,8 @@ program orog_source
 
     ncid = open_dataset(fn_output)
     stat = write_data(ncid, 'fcoeffs', fcoeffs, (/nhj_dim_id,nhi_dim_id,ncell_dim_id/))
+    stat = write_data(ncid, 'wavelength_lat', wls_lat, (/ncell_dim_id/))
+    stat = write_data(ncid, 'wavelength_lon', wls_lon, (/ncell_dim_id/))
     if (run_flags%rotation == 1) then
         stat = write_data(ncid, 'opt_deg', opt_deg, (/ncell_dim_id/))
         stat = write_data(ncid, 'errs', errs, (/ndegrees_dim_id,ncell_dim_id/))
