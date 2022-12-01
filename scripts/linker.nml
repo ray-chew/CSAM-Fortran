@@ -1,9 +1,26 @@
 !userdata.nml
 &USERDATA
 
-    fn_grid = "/scratch/atmodynamics/chew/data/icon_grid_0012_R02B04_G.nc"
-    fn_topo = "/scratch/atmodynamics/chew/data/GMTED2010_topoGlobal_SGS_30ArcSec.nc"
+    ! fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked_100.nc"
+    ! fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact_100.nc"
+    ! fn_output   = "/home/ray/git-projects/trifourtopo/data/output_100.nc"
+
+    fn_grid     = "/scratch/atmodynamics/chew/data/icon_compact_linked.nc"
+    fn_topo     = "/scratch/atmodynamics/chew/data/topo_compact.nc"
     fn_output   = "/scratch/atmodynamics/chew/data/output.nc"
 
-    flags%debug = .false.
+    debug%output = .true.           ! do we verbose output result after each substep?
+    debug%skip_four = .false.       ! do we skip the fourier computation substep?
+    debug%recover_topo = .true.    ! do we recover the topography? 
+    debug%recover_sol = .false.     ! do we recover the solution of the linear regression from fcoeffs?
+    debug%verbose = .true.         ! do we do verbose printing of progress?
+
+    tol%box_padding = 0.0       ! add padding to box search in degrees lat and lon
+    tol%sp_real = 1e-7          ! what is the tolerance to consider two single-precision floats as ``identical''?
+    tol%dp_real = 1e-15         ! same as sp_real but for double-precision
+
+    run%full_spectrum = .false. ! do we compute with the full power spectrum?
+    run%rotation = 0            ! 0 = none; 1 = search; 2 = pca; 3 = optimal
+    run%fn_optimal = ""         ! 
+
 !

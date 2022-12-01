@@ -12,7 +12,9 @@ program grid_linker
     character(len=1024)                        :: fn_grid
     character(len=1024)                        :: fn_topo
     character(len=1024)                        :: fn_output
-    type(flags_t)                           :: flags
+    type(debug_t) :: debug_flags
+    type(tol_t) :: tol_flags
+    type(run_t) :: run_flags
     integer                                 :: Ncells, Nrecs
     integer                                 :: i
     integer, dimension(:,:), allocatable    :: icon_topo_links
@@ -29,7 +31,7 @@ program grid_linker
 
     print *, "Start preprocessing grid data..."
     call get_fn(fn)
-    call get_namelist(fn, fn_grid, fn_topo, fn_output, flags)
+    call get_namelist(fn, fn_grid, fn_topo, fn_output, tol_flags, debug_flags, run_flags)
 
     call read_data(fn_grid, "clat", lat_center)
     call read_data(fn_grid, "clon", lon_center)
@@ -80,7 +82,7 @@ program grid_linker
         call get_box_width(lat_vert(:,i), lon_vert(:,i), llgrid)
         clat = lat_center(i)
         clon = lon_center(i)
-        call get_topo_idx(topo_lat, topo_lon, clat, clon, llgrid, i, icon_topo_links)
+        call get_topo_idx(topo_lat, topo_lon, llgrid, i, icon_topo_links)
     end do
     !$OMP END PARALLEL DO
 
