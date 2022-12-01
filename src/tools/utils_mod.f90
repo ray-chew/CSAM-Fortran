@@ -161,4 +161,15 @@ contains
     end function bool2int
 
 
+    elemental subroutine translate_deg_longitude(lon)
+        implicit none
+        real, intent(inout) :: lon
+
+        if (lon < 0.0) then 
+            lon = lon + 360.0
+        end if
+
+    end subroutine translate_deg_longitude
+
+
 end module utils_mod

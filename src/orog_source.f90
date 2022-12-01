@@ -57,6 +57,10 @@ program orog_source
     call read_data(fn_topo, "lon", topo_lon)
     call read_data(fn_topo, "topo", topo_dat)
 
+    call translate_deg_longitude(lon_center)
+    call translate_deg_longitude(lon_vert)
+    call translate_deg_longitude(topo_lon)
+
     print *, "Read topo_lat with shape: ", shape(topo_lat)
     print *, "Read topo_lon with shape: ", shape(topo_lon)
     print *, "Read topo_dat with shape: ", shape(topo_dat)
@@ -140,8 +144,12 @@ program orog_source
             print *, "Skipping (H < 1.0) cell: ", i
             fcoeffs(:,:,i) = nan
             ! print *, "Below sea level cell: ", i
-            opt_deg(i) = alphas(1)
-            errs(:,i) = err_val
+
+            if (run_flags%rotation == 1) then
+                opt_deg(i) = nan
+                err_val = nan
+                errs(:,i) = err_val
+            end if
 
             call dealloc_topo_obj(topo_obj, .false.)
 

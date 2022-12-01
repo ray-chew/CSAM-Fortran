@@ -52,6 +52,10 @@ program grid_linker
     call read_data(fn_topo, "lon", topo_lon)
     ! call read_data(fn_topo, "topo", topo_dat)
 
+    call translate_deg_longitude(lon_center)
+    call translate_deg_longitude(lon_vert)
+    call translate_deg_longitude(topo_lon)
+
     print *, "Read topo_lat with shape: ", shape(topo_lat)
     print *, "Read topo_lon with shape: ", shape(topo_lon)
     ! print *, "Read topo_dat with shape: ", shape(topo_dat)
