@@ -110,7 +110,7 @@ program orog_source
     !$OMP& SHARED(topo_lat, topo_lon, topo_dat, lat_center, lon_center,       &
     !$OMP& lat_vert, lon_vert, link_map, fcoeffs, fn_output,                &
     !$OMP& errs, opt_deg)       &
-    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ndegrees, Ncells, err_val) &
+    !$OMP& FIRSTPRIVATE(run_flags, tol_flags, debug_flags, Ndegrees, Ncells, err_val, nan) &
     !$OMP& SCHEDULE(DYNAMIC)
     do i = 1, Ncells
         if (debug_flags%verbose) print *, "Starting cell: ", i
@@ -140,6 +140,10 @@ program orog_source
             print *, "Skipping (H < 1.0) cell: ", i
             fcoeffs(:,:,i) = nan
             ! print *, "Below sea level cell: ", i
+            opt_deg(i) = alphas(1)
+            errs(:,i) = err_val
+
+            call dealloc_topo_obj(topo_obj, .false.)
 
         else if (debug_flags%skip_four) then
 
@@ -218,7 +222,7 @@ program orog_source
             end if
             !$OMP END CRITICAL
 
-            call dealloc_topo_obj(topo_obj)
+            call dealloc_topo_obj(topo_obj, .true.)
             deallocate(coeffs)
             deallocate(mask)
         end if

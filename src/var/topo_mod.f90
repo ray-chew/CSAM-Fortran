@@ -390,9 +390,10 @@ contains
     end subroutine get_topo_by_index
 
 
-    subroutine dealloc_topo_obj(obj)
+    subroutine dealloc_topo_obj(obj, full)
         implicit none
         type(topo_t), intent(inout) :: obj
+        logical, intent(in) :: full
 
         deallocate(obj%lat)
         deallocate(obj%lon)
@@ -400,11 +401,13 @@ contains
         deallocate(obj%lon_grid)
         deallocate(obj%topo)
 
-        deallocate(obj%lat_tri)
-        deallocate(obj%lon_tri)
-        deallocate(obj%topo_tri)
+        if (full) then
+            deallocate(obj%lat_tri)
+            deallocate(obj%lon_tri)
+            deallocate(obj%topo_tri)
 
-        deallocate(obj%fcoeffs)
+            deallocate(obj%fcoeffs)
+        end if
 
         if (allocated(obj%topo_recon_2D)) then
             deallocate(obj%topo_recon_2D)
