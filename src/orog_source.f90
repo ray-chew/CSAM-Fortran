@@ -31,6 +31,7 @@ program orog_source
     logical, dimension(:,:), allocatable :: mask
     integer, parameter :: chunk=100
     logical :: tmp_switch = .false.
+    logical, dimension(:,:), allocatable :: cond
 
     nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
     Ndegrees = 90
@@ -142,26 +143,37 @@ program orog_source
         end if
         !$OMP END CRITICAL
 
-        if ((maxval(topo_obj%topo)) < 1.0) then
+        ! if ((maxval(topo_obj%topo)) < 1.0) then
 
-            print *, "Skipping (H < 1.0) cell: ", i
-            fcoeffs(:,:,i) = nan
-            ! print *, "Below sea level cell: ", i
+        !     print *, "Skipping (H < 1.0) cell: ", i
+        !     fcoeffs(:,:,i) = nan
+        !     wls_lat(i) = 0.0
+        !     wls_lon(i) = 0.0
+        !     ! print *, "Below sea level cell: ", i
 
-            if (run_flags%rotation == 1) then
-                opt_deg(i) = nan
-                err_val = nan
-                errs(:,i) = err_val
-            end if
+        !     if (run_flags%rotation == 1) then
+        !         opt_deg(i) = nan
+        !         err_val = nan
+        !         errs(:,i) = err_val
+        !     end if
 
-            call dealloc_topo_obj(topo_obj, .false.)
+        !     call dealloc_topo_obj(topo_obj, .false.)
 
-        else if (debug_flags%skip_four) then
+        if (debug_flags%skip_four) then
 
             print *, "Skipping fourier computations for cell: ", i
             fcoeffs(:,:,i) = nan 
+            wls_lat(i) = 0.0
+            wls_lon(i) = 0.0
 
         else
+
+            cond = (topo_obj%topo < 1.0)
+            cond = (topo_obj%topo > 0.0) .and. cond
+
+            if ((sum(pack(topo_obj%topo, cond)) < 10.0) .and. (maxval(topo_obj%topo) < 10.0) ) then
+                topo_obj%topo = 0.0
+            end if                
 
             if (debug_flags%verbose) print *, "Setting triangular vertices"
             call set_triangle_verts(llgrid_obj, lat_vert(:,i), lon_vert(:,i))
