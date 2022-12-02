@@ -430,9 +430,12 @@ contains
 
         do i = 1, end-1
             if (all(abs(arr_nrecs(:,end) - arr_nrecs(:,end-i)) < tol)) then
-                arr_indices(:,end-i) = .false.
+                if (count(arr_indices(:, end)) /= 0) then
+                    arr_indices(:,end-i) = .false.
+                end if
             end if
         end do
+   
 
         ! if ((start == 1) .and. (nrecs > 2)) then
         !     if (all(abs(arr_nrecs(:,start) - arr_nrecs(:,nrecs)) < tol)) then
