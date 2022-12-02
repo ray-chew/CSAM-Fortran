@@ -21,7 +21,7 @@ program orog_source
     real, dimension(:,:), allocatable :: lat_vert, lon_vert, topo_lat, topo_lon, coeffs, errs
     real(kind=DP), dimension(:,:,:), allocatable :: topo_dat
     real :: start, finish, wt_start, wt_finish
-    integer :: i, j, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id, lon_dim_id
+    integer :: i, j, Ncells, stat, ncid, nhi_dim_id, nhj_dim_id, ncell_dim_id, lat_dim_id = 0, lon_dim_id = 0
     integer :: ndegrees_dim_id, Ndegrees
     real :: clat, clon, nan, alpha
     complex, allocatable :: fcoeffs(:,:,:)
@@ -29,7 +29,6 @@ program orog_source
     type(topo_t) :: topo_obj
     type(llgrid_t) :: llgrid_obj
     logical, dimension(:,:), allocatable :: mask
-    integer, parameter :: chunk=100
     logical :: tmp_switch = .false.
     logical, dimension(:,:), allocatable :: cond
 
