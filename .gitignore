@@ -36,6 +36,7 @@ data/*
 build*/
 test/*
 *.ipynb_checkpoints*
+notebooks/img/*
 
 # Test files, temporary files, and output
 test.*
