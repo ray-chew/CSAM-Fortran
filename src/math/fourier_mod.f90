@@ -14,6 +14,7 @@ module fourier_mod
 
     interface get_coeffs
         module procedure get_full_coeffs
+        ! module procedure get_coeffs_deprecate
         module procedure get_axial_coeffs
     end interface get_coeffs
 
@@ -126,7 +127,7 @@ contains
         real, dimension(:,:), allocatable, intent(out) :: coeffs
         logical, dimension(:,:), intent(in) :: mask
         real, dimension(:,:), allocatable :: c_cos, c_sin, terms_sum
-        ! real, dimension(:,:,:), allocatable :: tmp_i, tmp_j
+        real, dimension(:,:,:), allocatable :: tmp_i, tmp_j
 
         type(ftmp_t) :: f_obj
         integer :: ncells, dense_sz, nhj_0
@@ -143,16 +144,16 @@ contains
         ncells = size(f_obj%terms_i, dim=1)
         dense_sz = size(f_obj%terms_i, dim=2) * size(f_obj%terms_j, dim=2)
 
+        tmp_i = spread(f_obj%terms_i, dim=2, ncopies=size(f_obj%terms_j, dim=2))
+        tmp_j = spread(f_obj%terms_j, dim=3, ncopies=size(f_obj%terms_i, dim=2))
+
+        ! f_obj%terms_i = reshape(tmp_i, (/ncells, dense_sz/), order=(/1,2/))
+        ! f_obj%terms_j = reshape(tmp_j, (/ncells, dense_sz/), order=(/1,2/))
+
         f_obj%terms_i = reshape(spread(f_obj%terms_i, dim=2, ncopies=size(f_obj%terms_j, dim=2)), &
         (/ncells, dense_sz/), order=(/1,2/))
         f_obj%terms_j = reshape(spread(f_obj%terms_j, dim=3, ncopies=size(f_obj%terms_i, dim=2)), &
         (/ncells, dense_sz/), order=(/1,2/))
-
-        ! tmp_i = spread(f_obj%terms_i, dim=2, ncopies=size(f_obj%terms_j, dim=2))
-        ! tmp_j = spread(f_obj%terms_j, dim=3, ncopies=size(f_obj%terms_i, dim=2))
-
-        ! f_obj%terms_i = reshape(tmp_i, (/ncells, dense_sz/), order=(/1,2/))
-        ! f_obj%terms_j = reshape(tmp_j, (/ncells, dense_sz/), order=(/1,2/))
 
         nhj_0 = nhar_j / 2 + 1 ! index position of the zeroth j-wavenumber
 
@@ -162,8 +163,9 @@ contains
 
         terms_sum = f_obj%terms_i + f_obj%terms_j
 
-        c_cos = cos(2.0 * PI * terms_sum(:,nhj_0:dense_sz))
-        c_sin = sin(2.0 * PI * terms_sum(:,nhj_0+1:dense_sz))
+        c_cos = 2.0 * cos(2.0 * PI * terms_sum(:,nhj_0:dense_sz))
+        c_cos(:,1) = c_cos(:,1) / 2.0
+        c_sin = 2.0 * sin(2.0 * PI * terms_sum(:,nhj_0+1:dense_sz))
 
         ! here, we do a transpose of coeffs to return a column-major result.
         allocate (coeffs(size(c_cos, dim=2) + size(c_sin, dim=2), ncells))
@@ -204,7 +206,6 @@ contains
         f_obj%terms_i = spread(ktil, dim=1, ncopies=size(f_obj%II)) * spread(f_obj%II, dim=2, ncopies=size(ktil)) / f_obj%Ni &
         + spread(ltil, dim=1, ncopies=size(f_obj%JJ)) * spread(f_obj%JJ, dim=2, ncopies=size(ltil)) / f_obj%Nj
 
-
         khat = real(f_obj%m_j) * cos(alpha + PI/2.0)
         lhat = real(f_obj%m_j) * sin(alpha + PI/2.0)
 
@@ -219,6 +220,7 @@ contains
         c_cos(:, int(nhar_i+1):int(nhar_i+1) + int(nhar_j - nhj_0 - 1)) = f_obj%terms_j(:, int(nhj_0+1):nhar_j)
 
         c_cos = 2.0 * cos(2.0 * PI * c_cos)
+        c_cos(:,1) = c_cos(:,1) / 2.0
 
 
         allocate (c_sin(size(f_obj%terms_i, dim=1), int(nhar_i-1) + int(nhar_j - nhj_0)))
@@ -227,7 +229,6 @@ contains
         c_sin(:, nhar_i:nhar_i + int(nhar_j - nhj_0 - 1)) = f_obj%terms_j(:, int(nhj_0+1):nhar_j)
 
         c_sin = 2.0 * sin(2.0 * PI * c_sin)
-
 
         allocate (coeffs(size(c_cos, dim=2) + size(c_sin,dim=2), size(f_obj%terms_i, dim=1)))
 
@@ -248,7 +249,7 @@ contains
         ! integer, dimension(count(mask)), intent(out) :: II, JJ
         real, dimension(count(mask)) :: lat_tri, lon_tri, topo_tri
         real :: d_lat, d_lon
-
+        
         ! we get lat, lon and topo in the triangle using the mask
         lat_tri = pack(topo_obj%lat_grid, mask=mask)
         lon_tri = pack(topo_obj%lon_grid, mask=mask)
@@ -297,9 +298,6 @@ contains
             self%m_j = (/(i, i=-(nhar_j-1)/2, nhar_j/2-1, 1)/)
         end if
 
-        ! if (compute_terms) then
-        ! end if
-        
     end subroutine prepare_terms
 
 
@@ -337,10 +335,10 @@ contains
                     if ((j == nhj_0) .and. (i == 1)) then
                         recov_coeffs(k) = sol(i)
                     else if ((j == nhj_0) .and. (i > 1)) then
-                        recov_coeffs(k) = cmplx(sol(i), sol(sep_sz + i))
+                        recov_coeffs(k) = cmplx(sol(i), sol(sep_sz + i)) / 2.0
                     end if
                     if ((i == 1) .and. (j > nhj_0)) then
-                        recov_coeffs(k) = cmplx(sol(nhar_i + l), sol(sep_sz + nhar_i + l))
+                        recov_coeffs(k) = cmplx(sol(nhar_i + l), sol(sep_sz + nhar_i + l)) / 2.0
                         l = l + 1
                     end if
                     k = k + 1
