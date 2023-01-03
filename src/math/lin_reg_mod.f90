@@ -31,8 +31,8 @@ contains
         type(tol_t), intent(in) :: tol
         logical, intent(in) :: full_spectrum
 
-        nc = size(coeffs,dim=1)
-        nd = size(coeffs,dim=2)
+        nc = size(coeffs,dim=1) ! wavenumber grid
+        nd = size(coeffs,dim=2) ! number of cells
         nwork = size(coeffs,dim=1)
 
         ! h_hat = matmul(coeffs, topo_obj%topo_tri)
