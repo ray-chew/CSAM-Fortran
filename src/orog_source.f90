@@ -104,6 +104,7 @@ program orog_source
     !$OMP PARALLEL
     !$OMP SINGLE
     print *, "Number of OMP threads used: ", omp_get_num_threads()
+    call omp_set_num_threads(6)
     print *, ""
     !$OMP END SINGLE
     !$OMP END PARALLEL
