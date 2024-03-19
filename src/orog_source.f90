@@ -101,10 +101,11 @@ program orog_source
     allocate (wls_lat(Ncells))
     allocate (wls_lon(Ncells))
 
+    call omp_set_num_threads(6)
+
     !$OMP PARALLEL
     !$OMP SINGLE
     print *, "Number of OMP threads used: ", omp_get_num_threads()
-    call omp_set_num_threads(6)
     print *, ""
     !$OMP END SINGLE
     !$OMP END PARALLEL

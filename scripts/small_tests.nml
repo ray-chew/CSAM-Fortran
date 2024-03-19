@@ -1,9 +1,9 @@
 !small_tests.nml
 &USERDATA
 
-    fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact_linked_28deg.nc"
-    fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact_28deg.nc"
-    fn_output   = "/home/ray/git-projects/trifourtopo/data/output_28deg.nc"
+    fn_grid     = "/home/ray/git-projects/trifourtopo/data/icon_compact.nc"
+    fn_topo     = "/home/ray/git-projects/trifourtopo/data/topo_compact.nc"
+    fn_output   = "/home/ray/git-projects/trifourtopo/data/output.nc"
 
     ! fn_grid     = "/scratch/atmodynamics/chew/data/icon_compact_linked.nc"
     ! fn_topo     = "/scratch/atmodynamics/chew/data/topo_compact.nc"

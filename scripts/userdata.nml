@@ -18,4 +18,5 @@
     run%full_spectrum = .false. ! do we compute with the full power spectrum?
     run%rotation = 0            ! 0 = none; 1 = search; 2 = pca; 3 = optimal
     run%fn_optimal = ""         ! 
+    
 !

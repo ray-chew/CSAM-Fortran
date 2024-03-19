@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(four_topo LANGUAGES Fortran)
 
+set(CMAKE_Fortran_COMPILER gfortran-11)
+
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 find_package(fortran_stdlib REQUIRED)
