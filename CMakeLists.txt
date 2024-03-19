@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(four_topo LANGUAGES Fortran)
+project(trifourtopo LANGUAGES Fortran)
 
 set(CMAKE_Fortran_COMPILER gfortran-11)
+set(OROG_SOURCE four_topo)
+set(LINKER linker)
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -25,7 +27,7 @@ add_compile_options(-fopenmp -g -Wall -Wextra -fdefault-real-8)
 
 link_libraries("-fopenmp")
 
-add_executable(${PROJECT_NAME} 
+add_executable(${OROG_SOURCE} 
                 src/orog_source.f90
                 src/io/read_data_mod.f90
                 src/io/write_data_mod.f90
@@ -39,16 +41,41 @@ add_executable(${PROJECT_NAME}
                 src/math/lin_reg_mod.f90
                 )
 
-target_include_directories(${PROJECT_NAME}
-                            PUBLIC
-                            "/usr/include"
-                            ${NETCDFF_INCLUDES_F90}
-                            )
+target_include_directories(${OROG_SOURCE}
+                PUBLIC
+                "/usr/include"
+                ${NETCDFF_INCLUDES_F90}
+                )
 
-target_link_libraries(  ${PROJECT_NAME} 
-                        PRIVATE
-                        ${NETCDFF_LIBRARIES_F90}
-                        fortran_stdlib::fortran_stdlib
-                        blas
-                        lapack
-                        )
+target_link_libraries(${OROG_SOURCE} 
+            PRIVATE
+            ${NETCDFF_LIBRARIES_F90}
+            fortran_stdlib::fortran_stdlib
+            blas
+            lapack
+            )
+
+
+add_executable(${LINKER} 
+                src/icon_usgs_linker.f90
+                src/io/read_data_mod.f90
+                src/io/write_data_mod.f90
+                src/io/netcdf_check_mod.f90
+                src/tools/const_mod.f90
+                src/tools/error_status_mod.f90
+                src/tools/utils_mod.f90
+                src/tools/triangle_mod.f90
+                src/var/topo_mod.f90
+                )
+
+target_include_directories(${LINKER}
+                PUBLIC
+                "/usr/include"
+                ${NETCDFF_INCLUDES_F90}
+                )
+
+target_link_libraries(${LINKER} 
+            PRIVATE
+            ${NETCDFF_LIBRARIES_F90}
+            fortran_stdlib::fortran_stdlib
+            )
